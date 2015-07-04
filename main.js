@@ -4,24 +4,55 @@
 
 var node = '',
     content,
+    wrapper,
     keyWordsArray = ['create', 'experiment', 'assign', 'to', 'all', 'users', 'where', 'for', 'salt', 'new'];
+
+var suggestions = $.parseHTML('<div class="list-group"><a href="#" class="list-group-item">Item 1</a><a href="#" class="list-group-item">Item 2</a> <a href="#" class="list-group-item">Item 3</a> <a href="#" class="list-group-item">Item 4</a> <a href="#" class="list-group-item">Item 5</a> </div>')[0];
 
 $(document).ready(function () {
     content = $('#content')[0];
+    wrapper = $('#wrapper')[0];
 });
 
-function processOnChange() {
-    if (window.event.keyCode == 32) {
+
+function suggest(e) {
+    if (e.shiftKey && e.keyCode == 32) {
+        var position = getCursorCoordinates(),
+            popoverContainer = $('.popoverContainer')[0],
+            popover = $('[data-toggle="popover"]');
+
+        initialisePopover(popover, popoverContainer, position.top + 25, position.left);
+    }
+}
+
+
+function processOnChange(e) {
+    if (e.keyCode == 32) {
         process();
+    } else if (e.keyCode == 13) {
+        if (content.firstChild != null && document.createRange) {
+            checkEveryTag(content);
+        }
     }
     else {
         var sel = window.getSelection(),
+            anchorNode = sel.anchorNode,
+            nextNode = anchorNode.nextElementSibling,
             nodeToCheck = sel.baseNode.parentElement;
+        if (anchorNode.length == sel.anchorOffset && (nextNode && nextNode.nodeName == 'SPAN')) {
+            $(nextNode).contents().unwrap();
+            content.normalize();
+        }
         if (nodeToCheck.className == 'highlighted') {
-            process();
+            var selection = window.getSelection(),
+                range = selection.getRangeAt(0),
+                char = getCharacterOffsetWithin(range, content);
+            checkHighlighted();
+            setCaretCharIndex(content, char);
         }
     }
 }
+
 
 function process() {
     if (content.firstChild != null) {
@@ -31,52 +62,71 @@ function process() {
         }
         var range = selection.getRangeAt(0),
             char = getCharacterOffsetWithin(range, content);
-        highlight(keyWordsArray);
+        if (document.createRange) {
+            checkEveryTag(content);
+        }
         setCaretCharIndex(content, char);
     }
 }
 
-function highlight(arr) {
-    var root = content.childNodes;
 
-    for (var i = 0; i < root.length; i++) {
-        if (root[i].nodeName == 'SPAN') {
-            node += $(root[i]).html();
-        }
-        else {
-            node += root[i].nodeValue;
-        }
-    }
-
-    $(content).html(node);
-    var str = content.firstChild,
-        strNode = str.nodeValue,
-        ranges = [];
-    if (document.createRange) {
-        for (var j = 0; j < arr.length; j++) {
-            var word = arr[j],
-                matches = getMatches(word, strNode);
-            if (matches.length > 0) {
-                var matchArray = [];
-                for (var l = 0; l < matches.length; l++) {
-                    var rng = document.createRange();
-                    rng.setStart(str, matches[l]);
-                    rng.setEnd(str, matches[l] + word.length);
-                    matchArray[l] = rng;
-                }
-                ranges = ranges.concat(matchArray);
+function checkEveryTag(node) {
+    if (node.childNodes.length > 0) {
+        for (var i = 0; i < node.childNodes.length; i++) {
+            if (node.childNodes[i].data && node.childNodes[i].data != '' || node.childNodes[i].nodeName == 'DIV') {
+                checkEveryTag(node.childNodes[i]);
             }
         }
     }
-    for (var k = 0; k < ranges.length; k++) {
-        var highlightDiv = document.createElement('span');
-        highlightDiv.style.color = 'blue';
-        highlightDiv.style.fontWeight = 'bold';
-        highlightDiv.className = 'highlighted';
-        ranges[k].surroundContents(highlightDiv);
+    else {
+        var ranges = makeRangesFromMatches(keyWordsArray, node);
+        wrapNodes(ranges);
+        console.log(node.data)
     }
-    node = '';
 }
+
+
+function getMatches(word, text) {
+    var regular = new RegExp("\\b" + word + "\\b((?!\\W(?=\\w))|(?=\\s))", "gi"),
+        array,
+        result = [];
+    while ((array = regular.exec(text)) !== null) {
+        result.push(array.index);
+    }
+    return result;
+}
+
+
+function makeRangesFromMatches(arr, node) {
+    var ranges = [];
+
+    for (var j = 0; j < arr.length; j++) {
+        var word = arr[j],
+            matches = getMatches(word, node.nodeValue);
+        if (matches.length > 0) {
+            var matchArray = [];
+            for (var l = 0; l < matches.length; l++) {
+                var rng = document.createRange();
+                rng.setStart(node, matches[l]);
+                rng.setEnd(node, matches[l] + word.length);
+                matchArray[l] = rng;
+            }
+            ranges = ranges.concat(matchArray);
+        }
+    }
+    return ranges;
+}
+
+
+function wrapNodes(ranges) {
+    for (var i = 0; i < ranges.length; i++) {
+        var highlightTag = document.createElement('span');
+        highlightTag.className = 'highlighted';
+        $(highlightTag).data("content", ranges[i].toString());
+        ranges[i].surroundContents(highlightTag);
+    }
+}
+
 
 function getCharacterOffsetWithin(range, node) {
     var treeWalker = document.createTreeWalker(
@@ -100,6 +150,7 @@ function getCharacterOffsetWithin(range, node) {
     }
     return charCount;
 }
+
 
 function setCaretCharIndex(containerEl, index) {
     var charIndex = 0, stop = {};
@@ -131,12 +182,36 @@ function setCaretCharIndex(containerEl, index) {
     }
 }
 
-function getMatches(word, text) {
-    var regular = new RegExp("\\b" + word + "\\b((?!\\W(?=\\w))|(?=\\s))", "gi"),
-        array,
-        result = [];
-    while ((array = regular.exec(text)) !== null) {
-        result.push(array.index);
+
+function getCursorCoordinates() {
+    var range = window.getSelection().getRangeAt(0);
+    var anchor = document.createElement('span');
+    anchor.className = 'anchor';
+    range.insertNode(anchor);
+    var position = $('.anchor').offset();
+    content.removeChild($('.anchor')[0]);
+    return position;
+}
+
+
+function checkHighlighted() {
+    var highlighted = $('.highlighted');
+    for (var i = 0; i < highlighted.length; i++) {
+        if ($(highlighted[i]).text() != $.trim($(highlighted[i]).data('content'))) {
+            $(highlighted[i]).contents().unwrap();
+            content.normalize();
+        }
     }
-    return result;
+}
+
+
+function initialisePopover(popover, popoverContainer, top, left) {
+    popover.popover({html: true, content: suggestions});
+    popoverContainer.style.top = top + 'px';
+    popoverContainer.style.left = left + 'px';
+
+    popover.popover('show');
+    $($('.popover')[0]).mouseleave(function () {
+        popover.popover('destroy')
+    });
 }

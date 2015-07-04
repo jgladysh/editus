@@ -1,7 +1,9 @@
 <!doctype html>
 <head>
     <title>SQL-editor</title>
-    <script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+    <script src="jquery.js" type="text/javascript"></script>
+    <link rel="stylesheet" href="bootstrap.min.css">
+    <script src="bootstrap.min.js"></script>
     <script src="main.js"></script>
     <style>
         #wrapper {
@@ -22,12 +24,22 @@
             left: 50%;
             margin: -100px 0 0 -400px;
             font-size: 24px;
+            font-family: monospace;
         }
+
+        #content span {
+            color: brown;
+            font-weight: bold;
+        }
+
     </style>
 </head>
 
 <div id='wrapper'>
-    <div contenteditable="true" id='content' onkeyup="processOnChange()" onmouseup="process()"></div>
+    <div contenteditable="true" id='content' onkeyup="processOnChange(event)" onkeydown="suggest(event)"
+         onmouseup="process()"></div>
+    <div class='popoverContainer' style='position: absolute;'><a href="#" title="" data-toggle="popover" data-content=""
+                                                                 data-placement="bottom"></a></div>
 </div>
 </body>
 
