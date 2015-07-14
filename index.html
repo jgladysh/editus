@@ -4,6 +4,7 @@
     <script src="jquery.js" type="text/javascript"></script>
     <link rel="stylesheet" href="bootstrap.min.css">
     <script src="bootstrap.min.js"></script>
+    <script src="undo.js"></script>
     <script src="main.js"></script>
     <style>
         #wrapper {
@@ -36,8 +37,10 @@
 </head>
 
 <div id='wrapper'>
-    <div contenteditable="true" id='content' onkeyup="processOnChange(event)" onkeydown="suggest(event)"
-         onmouseup="process()"></div>
+    <div contenteditable="true" id='content'
+         onkeyup="processOnChange(event).then(execute(250))"
+         onkeydown="suggest(event)"
+         onmouseup="process().then(execute(0), function(){})"></div>
     <div class='popoverContainer' style='position: absolute;'><a href="#" title="" data-toggle="popover" data-content=""
                                                                  data-placement="bottom"></a></div>
 </div>
