@@ -19,7 +19,7 @@
         #content {
             border: 1px solid black;
             width: 800px;
-            height: 200px;
+            min-height: 200px;
             position: absolute;
             top: 50%;
             left: 50%;
@@ -38,9 +38,9 @@
 
 <div id='wrapper'>
     <div contenteditable="true" id='content'
-         onkeyup="processOnChange(event).then(execute(250))"
+         onkeyup="processOnChange(event).then(execute(250,event))"
          onkeydown="suggest(event)"
-         onmouseup="process().then(execute(0), function(){})"></div>
+         onmouseup="process().then(execute(0,event), function(){})"></div>
     <div class='popoverContainer' style='position: absolute;'><a href="#" title="" data-toggle="popover" data-content=""
                                                                  data-placement="bottom"></a></div>
 </div>

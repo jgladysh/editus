@@ -61,7 +61,7 @@ $(document).ready(function () {
     };
 });
 
-var execute = function (timeout) {
+var execute = function (timeout, e) {
     clearTimeout(timer);
     timer = setTimeout(function () {
         var range = window.getSelection().getRangeAt(0),
@@ -73,11 +73,11 @@ var execute = function (timeout) {
         var undoPosition = position,
             redoPosition = getCharacterOffsetWithin(range, content);
 
-        if (undoPosition == redoPosition) {
+        if (undoPosition == redoPosition || e.keyCode == 13) {
+            wasUndo = false;
             return;
         }
         if (wasUndo) {
-            console.log(stack.commands[stack.stackPosition].undoPosition + '  ' + stack.commands[stack.stackPosition].redoPosition)
             stack.execute(new EditCommand(content, startValue, newValue, stack.commands[stack.stackPosition].redoPosition, redoPosition));
         }
         else if (undoPosition != redoPosition && newValue == startValue) {
@@ -109,24 +109,16 @@ function suggest(e) {
 
         initialisePopover(popover, popoverContainer, position.top + 25, position.left);
     }
-    else if (e.metaKey && e.keyCode == 90) {
-        meta = true;
+    else if (e.metaKey) {
         e.preventDefault();
-        if (canUndo) {
-            stack.undo();
-            process();
-        }
-    }
-    else if (e.metaKey && e.keyCode == 89) {
         meta = true;
-        e.preventDefault();
-        if (canRedo) {
-            stack.redo();
-            process();
-        }
     }
-    else if (e.metaKey && e.keyCode == 65) {
-        meta = true;
+
+    if (e.metaKey && e.keyCode == 90 && canUndo) {
+        stack.undo();
+    }
+    else if (e.metaKey && e.keyCode == 89 && canRedo) {
+        stack.redo();
     }
 }
 
@@ -155,7 +147,7 @@ var processOnChange = function (e) {
         }
     }
     else {
-        if (e.keyCode != 37 & e.keyCode != 38 & e.keyCode != 39 & e.keyCode != 40) {
+        if (e.keyCode != 37 & e.keyCode != 38 & e.keyCode != 39 & e.keyCode != 40 & !meta) {
             checkHighlighted(e);
         }
         else {
@@ -178,8 +170,10 @@ function process() {
         if (document.createRange) {
             checkEveryTag(content);
         }
-
-        if (selection.baseOffset != 0) {
+        if ((meta && selection.baseOffset == 0 && selection.baseNode.nodeName == 'DIV') || (!meta && selection.baseOffset == 0)) {
+            return d.promise();
+        }
+        else {
             setCaretCharIndex(content, char);
         }
     }
