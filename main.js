@@ -14,8 +14,7 @@ var content,
     cursorChange = false,
     position = 0,
     meta = false,
-    stack = new Undo.Stack(),
-    blocked = false;
+    stack = new Undo.Stack();
 
 var suggestions = $.parseHTML('<div class="list-group"><a href="#" class="list-group-item">Item 1</a><a href="#" class="list-group-item">Item 2</a> <a href="#" class="list-group-item">Item 3</a> <a href="#" class="list-group-item">Item 4</a> <a href="#" class="list-group-item">Item 5</a> </div>')[0];
 
@@ -35,7 +34,6 @@ $(document).ready(function () {
         execute: function () {
         },
         undo: function () {
-            blocked = true;
             this.textarea.innerHTML = this.oldValue;
             startValue = content.innerHTML;
             setCaretCharIndex(content, this.undoPosition);
@@ -43,7 +41,6 @@ $(document).ready(function () {
         },
 
         redo: function () {
-            blocked = true;
             this.textarea.innerHTML = this.newValue;
             startValue = content.innerHTML;
             setCaretCharIndex(content, this.redoPosition);
@@ -62,14 +59,17 @@ $(document).ready(function () {
 });
 
 var execute = function (timeout, e) {
+    if (meta) {
+        meta = false;
+        return;
+    }
+    if(wasUndo || !content.hasChildNodes()){
+        timeout = 0;
+    }
     clearTimeout(timer);
     timer = setTimeout(function () {
         var range = window.getSelection().getRangeAt(0),
             newValue = content.innerHTML;
-        if (meta) {
-            meta = false;
-            return;
-        }
         var undoPosition = position,
             redoPosition = getCharacterOffsetWithin(range, content);
 
@@ -78,7 +78,8 @@ var execute = function (timeout, e) {
             return;
         }
         if (wasUndo) {
-            stack.execute(new EditCommand(content, startValue, newValue, stack.commands[stack.stackPosition].redoPosition, redoPosition));
+            undoPosition = stack.stackPosition >=0 ? stack.commands[stack.stackPosition].redoPosition : stack.commands[0].redoPosition ;
+            stack.execute(new EditCommand(content, startValue, newValue, undoPosition, redoPosition));
         }
         else if (undoPosition != redoPosition && newValue == startValue) {
             if (cursorChange) {
@@ -102,6 +103,7 @@ var execute = function (timeout, e) {
 
 
 function suggest(e) {
+    var d = new $.Deferred();
     if (e.shiftKey && e.keyCode == 32) {
         var position = getCursorCoordinates(),
             popoverContainer = $('.popoverContainer')[0],
@@ -109,7 +111,7 @@ function suggest(e) {
 
         initialisePopover(popover, popoverContainer, position.top + 25, position.left);
     }
-    else if (e.metaKey) {
+    else if (e.metaKey && e.keyCode != 65 && e.keyCode != 88 && e.keyCode != 86 && e.keyCode != 67) {
         e.preventDefault();
         meta = true;
     }
@@ -120,6 +122,7 @@ function suggest(e) {
     else if (e.metaKey && e.keyCode == 89 && canRedo) {
         stack.redo();
     }
+    return d.promise();
 }
 
 var processOnChange = function (e) {

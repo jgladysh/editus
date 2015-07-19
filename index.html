@@ -38,11 +38,12 @@
 
 <div id='wrapper'>
     <div contenteditable="true" id='content'
-         onkeyup="processOnChange(event).then(execute(250,event))"
-         onkeydown="suggest(event)"
+         onkeyup="processOnChange(event)"
+         onkeydown="suggest(event).then(execute(250,event))"
          onmouseup="process().then(execute(0,event), function(){})"></div>
-    <div class='popoverContainer' style='position: absolute;'><a href="#" title="" data-toggle="popover" data-content=""
-                                                                 data-placement="bottom"></a></div>
+    <div class='popoverContainer' style='position: absolute;'>
+        <a href="#" title="" data-toggle="popover" data-content="" data-placement="bottom"></a>
+    </div>
 </div>
 </body>
 
