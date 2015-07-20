@@ -6,6 +6,10 @@
     <script src="bootstrap.min.js"></script>
     <script src="undo.js"></script>
     <script src="main.js"></script>
+    <script src="highlighting.js"></script>
+    <script src="caret.js"></script>
+    <script src="undo_redo.js"></script>
+    <script src="suggestion.js"></script>
     <style>
         #wrapper {
             width: 100%;
@@ -38,8 +42,8 @@
 
 <div id='wrapper'>
     <div contenteditable="true" id='content'
-         onkeyup="processOnChange(event)"
-         onkeydown="suggest(event).then(execute(250,event))"
+         onkeyup="processKeyUp(event)"
+         onkeydown="processKeyDown(event).then(execute(250,event))"
          onmouseup="process().then(execute(0,event), function(){})"></div>
     <div class='popoverContainer' style='position: absolute;'>
         <a href="#" title="" data-toggle="popover" data-content="" data-placement="bottom"></a>
