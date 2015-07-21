@@ -2,6 +2,7 @@
  * Created by julia on 7/20/15.
  */
 
+//Get index of character after which the cursor is positioned
 function getCharacterOffsetWithin(range, node) {
     var treeWalker = document.createTreeWalker(
         node,
@@ -25,7 +26,7 @@ function getCharacterOffsetWithin(range, node) {
     return charCount;
 }
 
-
+//Set the cursor after specified character
 function setCaretCharIndex(containerEl, index) {
     var charIndex = 0, stop = {};
 
@@ -56,7 +57,8 @@ function setCaretCharIndex(containerEl, index) {
     }
 }
 
-
+//Get the cursor coordinates position inside editor
+//At contentEditable element for this needed to create temporary span element at caret position, get it coordinates and then remove it
 function getCursorCoordinates() {
     var range = window.getSelection().getRangeAt(0);
     var anchor = document.createElement('span');
@@ -65,18 +67,4 @@ function getCursorCoordinates() {
     var position = $('.anchor').offset();
     content.removeChild($('.anchor')[0]);
     return position;
-}
-
-
-function normalizeSpace(nodeToCheck, selection, e) {
-    if (e.keyCode == 13) {
-        $(nodeToCheck.childNodes[0]).contents().unwrap();
-    }
-    if (e.keyCode == 32) {
-        var range = selection.getRangeAt(0),
-            char = getCharacterOffsetWithin(range, content);
-        $(nodeToCheck).contents().unwrap();
-        setCaretCharIndex(content, char);
-    }
-    content.normalize();
 }

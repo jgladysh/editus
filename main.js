@@ -3,71 +3,79 @@
  */
 
 var content,
+    processing = false,
     meta = false;
 
 $(document).ready(function () {
     content = $('#content')[0];
 });
 
+//Executing on key down event
 function processKeyDown(e) {
     var d = new $.Deferred();
 
+    //Showing of popup with suggestions at current cursor position
     if (e.shiftKey && e.keyCode == 32) {
         var position = getCursorCoordinates();
         initialisePopover(popover, popoverContainer, position.top + 25, position.left);
     }
-    else if (e.metaKey && e.keyCode != 65 && e.keyCode != 88 && e.keyCode != 86 && e.keyCode != 67) {
+    //Handling of undo/redo events
+    if (e.metaKey && e.keyCode != 65 && e.keyCode != 88 && e.keyCode != 86 && e.keyCode != 67) {
         e.preventDefault();
         meta = true;
-    }
 
-    if (e.metaKey && e.keyCode == 90 && canUndo) {
-        stack.undo();
-    }
-    else if (e.metaKey && e.keyCode == 89 && canRedo) {
-        stack.redo();
+        if (e.metaKey && e.keyCode == 90 && canUndo) {
+            stack.undo();
+        }
+        else if (e.metaKey && e.keyCode == 89 && canRedo) {
+            stack.redo();
+        }
     }
     return d.promise();
 }
 
+//Executing on key up event
 function processKeyUp(e) {
-    var sel = window.getSelection(),
-        nodeToCheck = sel.baseNode.parentElement;
-
-    if (sel.type == "Range") {
+    //var selection = window.getSelection(),
+    //    nodeToCheck = selection.baseNode.parentElement;
+    //Return if text was selected
+    if (window.getSelection().type == "Range") {
         return d.resolve();
     }
-
-    if (e.keyCode == 32 || e.keyCode == 13 || meta) {
-        if ((nodeToCheck.className == 'highlighted') || (e.keyCode == 13 && nodeToCheck.childNodes[0] && nodeToCheck.childNodes[0].className == 'highlighted')) {
-            normalizeSpace(nodeToCheck, sel, e);
-        }
-        process();
+    //Handling space, 'enter' and undo/redo events
+    if (e.keyCode == 32 || e.keyCode == 13 || e.keyCode == 8 || meta) {
+        processing = true;
         meta = false;
     }
-
-    if (e.keyCode == 37 || e.keyCode == 38 || e.keyCode == 39 || e.keyCode == 40) {
-        process();
-    } else {
+    //Handling arrow buttons events
+    if (e.keyCode != 37 && e.keyCode != 38 && e.keyCode != 39 && e.keyCode != 40) {
         checkHighlighted(e);
+    } else {
+        processing = true;
+    }
+
+    if(processing){
+        process();
     }
 }
 
+//Check text for words to highlight and set caret to current position
 function process() {
     var d = new $.Deferred();
 
     if (content.firstChild != null) {
         var selection = window.getSelection(),
             range = selection.getRangeAt(0),
-            char = getCharacterOffsetWithin(range, content);
-
+            char = getCharacterOffsetWithin(range, content),
+            offset = selection.baseOffset;
+        //Return if text was selected
         if (selection.type == "Range") {
             return d.resolve();
         }
 
         checkEveryTag(content);
-
-        if ((meta && selection.baseOffset == 0 && selection.baseNode.nodeName == 'DIV') || (!meta && selection.baseOffset == 0)) {
+        //Don't manually set caret in case of moving to new line
+        if ((meta && offset == 0 && selection.baseNode.nodeName == 'DIV') || (!meta && offset == 0)) {
             return d.promise();
         }
         else {
