@@ -37,13 +37,35 @@
             font-weight: bold;
         }
 
+        .popoverContainer {
+            padding: 0;
+            min-width: 100px;
+        }
+
+        .popover-content {
+            padding: 0px 14px;
+        }
+
+        .list-group {
+            margin-bottom: 0;
+        }
+
+        .list-group-item {
+            border: none;
+            padding: 5px 0;
+        }
+
+        .selected {
+            background: #ccc;
+        }
+
     </style>
 </head>
 
 <div id='wrapper'>
     <div contenteditable="true" id='content'
          onkeyup="processKeyUp(event)"
-         onkeydown="processKeyDown(event).then(execute(250,event))"
+         onkeydown="processKeyDown(event).then(execute(250,event), function(){})"
          onmouseup="process().then(execute(0,event), function(){})"></div>
     <div class='popoverContainer' style='position: absolute;'>
         <a href="#" title="" data-toggle="popover" data-content="" data-placement="bottom"></a>

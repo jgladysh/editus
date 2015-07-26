@@ -13,11 +13,22 @@ $(document).ready(function () {
 //Executing on key down event
 function processKeyDown(e) {
     var d = new $.Deferred();
-
+    //Handling events at suggestion popover
+    if (popUp && (e.keyCode == 38 || e.keyCode == 40 || e.keyCode == 13)) {
+        e.preventDefault();
+        listScroll(e);
+        return d.reject();
+    }
+    else if(popUp){
+        popover.popover('destroy');
+    }
     //Showing of popup with suggestions at current cursor position
     if (e.shiftKey && e.keyCode == 32) {
+        e.preventDefault();
         var position = getCursorCoordinates();
         initialisePopover(popover, popoverContainer, position.top + 25, position.left);
+        popUp = true;
+        return d.reject();
     }
     //Handling of undo/redo events
     if (e.metaKey && e.keyCode != 65 && e.keyCode != 88 && e.keyCode != 86 && e.keyCode != 67) {
@@ -36,11 +47,9 @@ function processKeyDown(e) {
 
 //Executing on key up event
 function processKeyUp(e) {
-    //var selection = window.getSelection(),
-    //    nodeToCheck = selection.baseNode.parentElement;
     //Return if text was selected
     if (window.getSelection().type == "Range") {
-        return d.resolve();
+        return;
     }
     //Handling space, 'enter' and undo/redo events
     if (e.keyCode == 32 || e.keyCode == 13 || e.keyCode == 8 || meta) {
@@ -54,7 +63,7 @@ function processKeyUp(e) {
         processing = true;
     }
 
-    if(processing){
+    if (processing) {
         process();
     }
 }

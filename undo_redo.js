@@ -74,7 +74,7 @@ var execute = function (timeout, e) {
             undoPosition = position,
             redoPosition = getCharacterOffsetWithin(range, content);
         //Handle and don't save if nothing was changed or was 'new line' event
-        if (undoPosition == redoPosition || e.keyCode == 13) {
+        if (undoPosition == redoPosition || (!executeOnInsert && e.keyCode == 13)) {
             wasUndo = false;
             return;
         }
@@ -102,5 +102,6 @@ var execute = function (timeout, e) {
         startValue = newValue;
         position = redoPosition;
         wasUndo = false;
+        executeOnInsert = false;
     }, timeout);
 };

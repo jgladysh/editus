@@ -65,6 +65,6 @@ function getCursorCoordinates() {
     anchor.className = 'anchor';
     range.insertNode(anchor);
     var position = $('.anchor').offset();
-    content.removeChild($('.anchor')[0]);
+    anchor.parentNode.removeChild($('.anchor')[0]);
     return position;
 }
