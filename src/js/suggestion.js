@@ -1,45 +1,50 @@
 /**
  * Created by julia on 7/20/15.
  */
+"use strict";
+
+import {execute} from './undo_redo';
+import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
+import{checkHighlighted} from './highlighting';
+import{setExecuteOnInsert} from './undo_redo';
+require('jquery');
+import jQuery from 'jquery';
+require('bootstrap');
 
 var popoverContainer,
-    popover,
-    $listItems,
+    pop,
     popUp = false,
     chosen,
     $current,
-    executeOnInsert = false;
-suggestions = $.parseHTML('<div class="list-group"><a href="#" class="list-group-item">Item 1</a><a href="#" class="list-group-item">Item 2</a> <a href="#" class="list-group-item">Item 3</a> <a href="#" class="list-group-item">Item 4</a> <a href="#" class="list-group-item">Item 5</a> </div>')[0];
-
-$(document).ready(function () {
-    popoverContainer = $('.popoverContainer')[0];
-    popover = $('[data-toggle="popover"]');
-});
+    suggestions = $.parseHTML('<div class="list-group"><a href="#" class="list-group-item">Item 1</a><a href="#" class="list-group-item">Item 2</a> <a href="#" class="list-group-item">Item 3</a> <a href="#" class="list-group-item">Item 4</a> <a href="#" class="list-group-item">Item 5</a> </div>')[0];
 
 //Popover initialisation
-function initialisePopover(popover, popoverContainer, top, left) {
+function initialisePopover(top, left) {
+    popoverContainer = $('.popoverContainer')[0];
+    pop = $('[data-toggle="popover"]');
     chosen = undefined;
     $current = undefined;
-    popover.popover({html: true, content: suggestions});
+    pop.popover({html: true, content: suggestions});
     popoverContainer.style.top = top + 'px';
     popoverContainer.style.left = left + 'px';
 
-    popover.popover('show');
+    pop.popover('show');
+    popUp = true;
     //Destroy popover when user takes away mouse from it
     $('.popover').mouseleave(function () {
-        popover.popover('destroy');
+        destroyPopUp();
         popUp = false;
     });
     //Triggering of choosing popup item with mouse
-    $('.popover').on('mousedown','a',function (e) {
+    $('.popover').on('mousedown', 'a', function (e) {
         e.preventDefault();
         chosen = e.currentTarget.innerText;
-        popover.popover('destroy');
+        destroyPopUp();
         popUp = false;
         insertNodeAtCursor(document.createTextNode(chosen));
         checkHighlighted(e);
-        execute(0,e);
-    })
+        execute(0, e);
+    });
 }
 
 //Handling Up/Down/Enter buttons in popover
@@ -50,16 +55,15 @@ function listScroll(e) {
 
     $listItems.removeClass('selected');
     //Handling Enter button
-    if (key == 13 && $current) {
+    if (key === 13 && $current) {
         chosen = $($current[0]).html();
-        popover.popover('destroy');
+        destroyPopUp();
         popUp = false;
         insertNodeAtCursor(document.createTextNode(chosen));
         return;
     }
     //Handling Down button
-    if (key == 40)
-    {
+    if (key === 40) {
         if (!$selected.length || $selected.is(':last-child')) {
             $current = $listItems.eq(0);
         }
@@ -68,8 +72,7 @@ function listScroll(e) {
         }
     }
     //Handling Up button
-    else if (key == 38)
-    {
+    else if (key === 38) {
         if (!$selected.length || $selected.is(':first-child')) {
             $current = $listItems.last();
         }
@@ -82,10 +85,23 @@ function listScroll(e) {
 
 //Insert node at current cursor position
 function insertNodeAtCursor(node) {
+    var content = $('#content')[0];
     var range = window.getSelection().getRangeAt(0);
     var char = getCharacterOffsetWithin(range, content);
     range.insertNode(node);
     content.normalize();
     setCaretCharIndex(content, char + node.length);
-    executeOnInsert = true;
+    setExecuteOnInsert(true);
 }
+
+//Return boolean value (true, if popover displayed)
+function getPopUp(){
+    return popUp;
+}
+
+//Destroy popover
+function destroyPopUp(){
+    pop.popover('destroy');
+}
+
+export { getPopUp, initialisePopover, listScroll, destroyPopUp};

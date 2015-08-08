@@ -1,0 +1,18 @@
+{
+  "name": "Editus",
+  "version": "0.0.1",
+  "description": "Editor based on contentEditable div with syntax highlighting and autocompletion",
+  "authors": [
+    "Julia Gladysh <jgladysh@gmail.com>"
+  ],
+  "license": "MIT",
+  "main": "dist/editus.js",
+  "ignore": [
+    "**/.*"
+  ],
+  "dependencies": {
+    "jquery": "latest",
+    "bootstrap": "latest",
+    "undo": "https://github.com/jzaefferer/undo.git"
+  }
+}

@@ -2,18 +2,28 @@
  * Created by julia on 7/20/15.
  */
 
+"use strict";
+
+import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
+require('jquery');
+require('undo');
+
 var startValue,
     EditCommand,
     timer,
     canRedo,
     canUndo,
     wasUndo,
+    content,
     position = 0,
+    executeOnInsert = false,
     cursorChange = false,
+    meta = false,
     stack = new Undo.Stack();
 
 $(document).ready(function () {
-    startValue = content.innerHTML;
+        content = $('#content')[0];
+        startValue = content.innerHTML;
 
     //Configuring of stack commands for undo/redo events
     EditCommand = Undo.Command.extend({
@@ -74,7 +84,7 @@ var execute = function (timeout, e) {
             undoPosition = position,
             redoPosition = getCharacterOffsetWithin(range, content);
         //Handle and don't save if nothing was changed or was 'new line' event
-        if (undoPosition == redoPosition || (!executeOnInsert && e.keyCode == 13)) {
+        if (undoPosition === redoPosition || (!executeOnInsert && e.keyCode === 13)) {
             wasUndo = false;
             return;
         }
@@ -83,7 +93,7 @@ var execute = function (timeout, e) {
             undoPosition = stack.stackPosition >= 0 ? stack.commands[stack.stackPosition].redoPosition : stack.commands[0].redoPosition;
         }
         //Catch mouse clicking and arrow keys events
-        else if (undoPosition != redoPosition && newValue == startValue) {
+        else if (undoPosition !== redoPosition && newValue === startValue) {
             //Save only last one from series
             if (cursorChange) {
                 stack.commands[stack.commands.length - 1].redoPosition = redoPosition;
@@ -102,6 +112,33 @@ var execute = function (timeout, e) {
         startValue = newValue;
         position = redoPosition;
         wasUndo = false;
-        executeOnInsert = false;
+        setExecuteOnInsert(false);
     }, timeout);
 };
+
+//Return boolean canRedo value (true if redo event is possible)
+function getCanRedo(){
+    return canRedo;
+}
+
+//Return boolean canUndo value (true if undo event is possible)
+function getCanUndo(){
+    return canUndo;
+}
+
+//Set meta value
+function setMeta(val){
+    meta = val;
+}
+
+//Return boolean meta value (true if meta key was pressed)
+function getMeta(){
+    return meta;
+}
+
+//Set executeOnInsert value
+function setExecuteOnInsert(val){
+    executeOnInsert = val;
+}
+
+export{execute,getCanRedo,getCanUndo,stack,setMeta, getMeta, setExecuteOnInsert};
