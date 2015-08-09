@@ -13,13 +13,15 @@ require('bootstrap');
 
 var popoverContainer,
     pop,
+    id,
     popUp = false,
     chosen,
     $current,
     suggestions = $.parseHTML('<div class="list-group"><a href="#" class="list-group-item">Item 1</a><a href="#" class="list-group-item">Item 2</a> <a href="#" class="list-group-item">Item 3</a> <a href="#" class="list-group-item">Item 4</a> <a href="#" class="list-group-item">Item 5</a> </div>')[0];
 
 //Popover initialisation
-function initialisePopover(top, left) {
+function initialisePopover(top, left, contentId) {
+    id = contentId;
     popoverContainer = $('.popoverContainer')[0];
     pop = $('[data-toggle="popover"]');
     chosen = undefined;
@@ -42,7 +44,7 @@ function initialisePopover(top, left) {
         destroyPopUp();
         popUp = false;
         insertNodeAtCursor(document.createTextNode(chosen));
-        checkHighlighted(e);
+        checkHighlighted(e, id);
         execute(0, e);
     });
 }
@@ -85,7 +87,7 @@ function listScroll(e) {
 
 //Insert node at current cursor position
 function insertNodeAtCursor(node) {
-    var content = $('#content')[0];
+    var content = document.getElementById(id);
     var range = window.getSelection().getRangeAt(0);
     var char = getCharacterOffsetWithin(range, content);
     range.insertNode(node);

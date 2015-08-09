@@ -8,13 +8,7 @@ import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 require('jquery');
 
 //Array of words, that should be highlighted
-var keyWordsArray = ["create", "experiment", "assign", "to", "all", "users", "where", "for", "salt", "new"],
-    content;
-
-
-$(document).ready(function () {
-    content = $('#content')[0];
-});
+var keyWordsArray = ["create", "experiment", "assign", "to", "all", "users", "where", "for", "salt", "new"];
 
 //Recursively check every element in contentEditable node
 function checkEveryTag(node) {
@@ -74,10 +68,11 @@ function wrapNodes(ranges) {
 }
 
 //Check every highlighted node for changes
-function checkHighlighted(e) {
+function checkHighlighted(e, id) {
     var sel = window.getSelection(),
         anchorNode = sel.anchorNode,
         nextNode = anchorNode.nextElementSibling,
+        content = document.getElementById(id),
         nodeToCheck = sel.baseNode.parentElement;
     //Handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
     if (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === 'SPAN')) {

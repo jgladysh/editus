@@ -1,7 +1,11 @@
 "use strict";
 
-import {makeEditable} from './main';
+import {makeEditable, getId} from './main';
+import {initStack} from './undo_redo';
+
+var id = 'content';
 
 window.onload = function(){
-    makeEditable('content');
+    initStack(id);
+    makeEditable(id);
 };

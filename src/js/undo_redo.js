@@ -21,11 +21,11 @@ var startValue,
     meta = false,
     stack = new Undo.Stack();
 
-$(document).ready(function () {
-        content = $('#content')[0];
+//Configuring of stack commands for undo/redo events
+function initStack(id) {
+        content = document.getElementById(id);
         startValue = content.innerHTML;
 
-    //Configuring of stack commands for undo/redo events
     EditCommand = Undo.Command.extend({
         constructor: function (textarea, oldValue, newValue, undoPosition, redoPosition) {
             this.textarea = textarea;
@@ -61,7 +61,7 @@ $(document).ready(function () {
     stack.changed = function () {
         stackUI();
     };
-});
+};
 
 //Executing at changes in editor with timeout and save changes to stack
 //On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
@@ -141,4 +141,4 @@ function setExecuteOnInsert(val){
     executeOnInsert = val;
 }
 
-export{execute,getCanRedo,getCanUndo,stack,setMeta, getMeta, setExecuteOnInsert};
+export{execute,getCanRedo,getCanUndo,stack,setMeta, getMeta, setExecuteOnInsert, initStack};

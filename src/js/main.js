@@ -9,12 +9,9 @@ import{checkHighlighted,checkEveryTag} from './highlighting';
 import{getPopUp, initialisePopover, listScroll, destroyPopUp} from './suggestion';
 import {stack,getCanRedo,getCanUndo, execute, setMeta, getMeta} from './undo_redo';
 
-var content,
-    processing = false;
-
-$(document).ready(function () {
-    content = $('#content')[0];
-});
+var processing = false,
+    id,
+    content;
 
 //Executing on key down event
 function processKeyDown(e) {
@@ -32,7 +29,7 @@ function processKeyDown(e) {
     if (e.shiftKey && e.keyCode === 32) {
         e.preventDefault();
         var position = getCursorCoordinates();
-        initialisePopover(position.top + 25, position.left);
+        initialisePopover(position.top + 25, position.left, id);
         return d.reject();
     }
     //Handling of undo/redo events
@@ -63,18 +60,18 @@ function processKeyUp(e) {
     }
     //Handling arrow buttons events
     if (e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
-        checkHighlighted(e);
+        checkHighlighted(e, id);
     } else {
         processing = true;
     }
 
     if (processing) {
-        process();
+        process(content);
     }
 }
 
 //Check text for words to highlight and set caret to current position
-function process() {
+function process(content) {
     var d = new $.Deferred();
 
     if (content.firstChild !== null) {
@@ -100,13 +97,14 @@ function process() {
 }
 
 //Set boolean processing value
-function setProcessing(val){
+function setProcessing(val) {
     processing = val;
 }
 
 //Make editor from contentEditable node
-function makeEditable(id) {
-    var content = document.getElementById(id);
+function makeEditable(contentId) {
+    id = contentId;
+    content = document.getElementById(id);
     content.onkeyup = function (event) {
         processKeyUp(event);
     };
@@ -115,7 +113,7 @@ function makeEditable(id) {
         });
     };
     content.onmouseup = function () {
-        process().then(execute(0, event), function () {
+        process(content).then(execute(0, event), function () {
         });
     };
 
