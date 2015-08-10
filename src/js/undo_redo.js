@@ -61,7 +61,7 @@ function initStack(id) {
     stack.changed = function () {
         stackUI();
     };
-};
+}
 
 //Executing at changes in editor with timeout and save changes to stack
 //On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
