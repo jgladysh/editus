@@ -1,5 +1,5 @@
 {
-  "name": "module-name",
+  "name": "editus",
   "version": "0.0.1",
   "description": "Editor based on contentEditable div with syntax highlighting and autocompletion",
   "author": "Julia Gladysh <jgladysh@gmail.com>",
