@@ -13,7 +13,8 @@
     "gulp",
     "gulpfile.js",
     "package.json",
-    "README.md"
+    "README.md",
+    ".npmignore"
   ],
   "dependencies": {
     "jquery": "latest",
