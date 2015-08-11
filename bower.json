@@ -8,7 +8,12 @@
   "license": "MIT",
   "main": "dist/editus.js",
   "ignore": [
-    "**/.*"
+    "./bower_components",
+    "./node_modules",
+    "./gulp",
+    "./gulpfile.js",
+    "./package.json",
+    "./README.md"
   ],
   "dependencies": {
     "jquery": "latest",

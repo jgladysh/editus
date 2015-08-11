@@ -11,7 +11,8 @@ import {stack,getCanRedo,getCanUndo, execute, setMeta, getMeta} from './undo_red
 
 var processing = false,
     id,
-    content;
+    content,
+    popoverString = "<div class=\'popoverContainer\' style=\'position: absolute;\'><a href=\"#\" title=\"\" data-toggle=\"popover\" data-content=\"\" data-placement=\"bottom\"></a> </div>";
 
 //Executing on key down event
 function processKeyDown(e) {
@@ -105,6 +106,17 @@ function setProcessing(val) {
 function makeEditable(contentId) {
     id = contentId;
     content = document.getElementById(id);
+
+    if (content.nodeName !== 'DIV') {
+        throw 'Editable element must be DIV';
+    }
+    $(content).after(popoverString);
+    addEvents(content);
+
+}
+
+//Add events to contentEditable node
+function addEvents(content) {
     content.onkeyup = function (event) {
         processKeyUp(event);
     };
@@ -116,6 +128,6 @@ function makeEditable(contentId) {
         process(content).then(execute(0, event), function () {
         });
     };
-
 }
+
 export {setProcessing, processKeyDown, processKeyUp, process, makeEditable};
