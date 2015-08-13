@@ -3,7 +3,7 @@
  */
 "use strict";
 
-require('jquery');
+import 'jquery';
 import {getCursorCoordinates,setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 import{checkHighlighted,checkEveryTag} from './highlighting';
 import{getPopUp, initialisePopover, listScroll, destroyPopUp} from './suggestion';

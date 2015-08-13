@@ -4,7 +4,7 @@
 
 "use strict";
 
-require('jquery');
+import 'jquery';
 
 //Get index of character after which the cursor is positioned
     function getCharacterOffsetWithin(range, node) {

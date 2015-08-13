@@ -5,7 +5,7 @@
 
 import {setProcessing} from './main';
 import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
-require('jquery');
+import 'jquery';
 
 //Array of words, that should be highlighted
 var keyWordsArray = ["create", "experiment", "assign", "to", "all", "users", "where", "for", "salt", "new"];

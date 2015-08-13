@@ -5,8 +5,8 @@
 "use strict";
 
 import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
-require('jquery');
-require('undo');
+import 'jquery';
+import 'undo';
 
 var startValue,
     EditCommand,

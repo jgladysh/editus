@@ -7,9 +7,9 @@ import {execute} from './undo_redo';
 import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 import{checkHighlighted} from './highlighting';
 import{setExecuteOnInsert} from './undo_redo';
-require('jquery');
+import 'jquery';
 import jQuery from 'jquery';
-require('bootstrap');
+import 'bootstrap';
 
 var popoverContainer,
     pop,
