@@ -3,6 +3,7 @@ var pkg     = require('../package.json'),
 
 var _src    = './src/',
     _dist   = './dist',
+    _css    = 'css/',
     _js     = 'js/';
 
 var bundles = [
@@ -22,6 +23,14 @@ module.exports = {
             options: pkg.lintOptions,
             dir: _src + _js
         }
+    },
+    css: {
+        bundles: bundler(bundles, _css, _src, _dist),
+        autoprefixer: {
+            browsers: ['> 1%', 'last 2 versions'],
+            cascade: false
+        },
+        compress: {}
     },
 
     clean: {

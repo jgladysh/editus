@@ -5,7 +5,7 @@ gulp.task('build', ['clean', 'lint'], function() {
 
 });
 
-gulp.task('bundle', ['scripts'], function() {
+gulp.task('bundle', ['scripts', 'css'], function() {
     global.doBeep = true;
 
 });
