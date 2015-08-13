@@ -10,7 +10,7 @@ var makeEditable = _dereq_("./main").makeEditable;
 
 var initStack = _dereq_("./undo_redo").initStack;
 
-createEditor = function (id) {
+var createEditor = function createEditor(id) {
     initStack(id);
     makeEditable(id);
 };
