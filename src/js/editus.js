@@ -5,13 +5,13 @@ import {initStack} from './undo_redo';
 import {setKeyWordsArray} from './highlighting';
 
 // Create editor from contentEditable div
-createEditor = function (id) {
+var createEditor = function (id) {
     initStack(id);
     makeEditable(id);
 };
 
 // Add words to be highlighted
-setHighlightingWords = function (arr) {
+var setHighlightingWords = function (arr) {
     if (arr && arr.length >= 0) {
         setKeyWordsArray(arr);
     }
