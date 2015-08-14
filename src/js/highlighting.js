@@ -8,20 +8,22 @@ import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 import 'jquery';
 
 //Array of words, that should be highlighted
-var keyWordsArray = ["create", "experiment", "assign", "to", "all", "users", "where", "for", "salt", "new"];
+var keyWordsArray;
 
 //Recursively check every element in contentEditable node
 function checkEveryTag(node) {
-    if (node.childNodes.length > 0) {
-        for (var i = 0; i < node.childNodes.length; i++) {
-            if (node.childNodes[i].data && node.childNodes[i].data !== '' || node.childNodes[i].nodeName === 'DIV') {
-                checkEveryTag(node.childNodes[i]);
+    if(keyWordsArray) {
+        if (node.childNodes.length > 0) {
+            for (var i = 0; i < node.childNodes.length; i++) {
+                if (node.childNodes[i].data && node.childNodes[i].data !== '' || node.childNodes[i].nodeName === 'DIV') {
+                    checkEveryTag(node.childNodes[i]);
+                }
             }
         }
-    }
-    else {
-        var ranges = makeRangesFromMatches(keyWordsArray, node);
-        wrapNodes(ranges);
+        else {
+            var ranges = makeRangesFromMatches(keyWordsArray, node);
+            wrapNodes(ranges);
+        }
     }
 }
 
@@ -69,34 +71,40 @@ function wrapNodes(ranges) {
 
 //Check every highlighted node for changes
 function checkHighlighted(e, id) {
-    var sel = window.getSelection(),
-        anchorNode = sel.anchorNode,
-        nextNode = anchorNode.nextElementSibling,
-        content = document.getElementById(id),
-        nodeToCheck = sel.baseNode.parentElement;
-    //Handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
-    if (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === 'SPAN')) {
-        $(nextNode).contents().unwrap();
-        content.normalize();
-        setProcessing(true);
-    }
-    if (nodeToCheck.className === 'highlighted' || sel.baseNode.className === 'highlighted') {
-        var range = sel.getRangeAt(0),
-            char = getCharacterOffsetWithin(range, content),
-            highlighted = $('.highlighted');
-        for (var i = 0; i < highlighted.length; i++) {
-            var text = $(highlighted[i]).text();
-            if (!(new RegExp(keyWordsArray.map(function (w) {
-                    return '^' + w + '$';
-                }).join('|'), 'gi').test(text))) {
-                $(highlighted[i]).contents().unwrap();
-                content.normalize();
-                if (e.keyCode !== 13) {
-                    setCaretCharIndex(content, char);
+    if(keyWordsArray) {
+        var sel = window.getSelection(),
+            anchorNode = sel.anchorNode,
+            nextNode = anchorNode.nextElementSibling,
+            content = document.getElementById(id),
+            nodeToCheck = sel.baseNode.parentElement;
+        //Handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
+        if (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === 'SPAN')) {
+            $(nextNode).contents().unwrap();
+            content.normalize();
+            setProcessing(true);
+        }
+        if (nodeToCheck.className === 'highlighted' || sel.baseNode.className === 'highlighted') {
+            var range = sel.getRangeAt(0),
+                char = getCharacterOffsetWithin(range, content),
+                highlighted = $('.highlighted');
+            for (var i = 0; i < highlighted.length; i++) {
+                var text = $(highlighted[i]).text();
+                if (!(new RegExp(keyWordsArray.map(function (w) {
+                        return '^' + w + '$';
+                    }).join('|'), 'gi').test(text))) {
+                    $(highlighted[i]).contents().unwrap();
+                    content.normalize();
+                    if (e.keyCode !== 13) {
+                        setCaretCharIndex(content, char);
+                    }
                 }
             }
         }
     }
 }
 
-export{checkHighlighted,checkEveryTag};
+function setKeyWordsArray(val) {
+    keyWordsArray = val;
+}
+
+export{checkHighlighted, checkEveryTag, setKeyWordsArray};
