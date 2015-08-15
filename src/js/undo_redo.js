@@ -8,25 +8,12 @@ import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 import 'jquery';
 import 'undo';
 
-var startValue,
-    EditCommand,
-    timer,
-    canRedo,
-    canUndo,
-    wasUndo,
-    content,
-    position = 0,
-    executeOnInsert = false,
-    cursorChange = false,
-    meta = false,
-    stack = new Undo.Stack();
-
 //Configuring of stack commands for undo/redo events
-function initStack(id) {
-        content = document.getElementById(id);
-        startValue = content.innerHTML;
+function initStack(obj) {
+    var content = obj.content();
+    obj.stack = new Undo.Stack();
 
-    EditCommand = Undo.Command.extend({
+    obj.EditCommand = Undo.Command.extend({
         constructor: function (textarea, oldValue, newValue, undoPosition, redoPosition) {
             this.textarea = textarea;
             this.oldValue = oldValue;
@@ -39,106 +26,82 @@ function initStack(id) {
         },
         undo: function () {
             this.textarea.innerHTML = this.oldValue;
-            startValue = content.innerHTML;
+            obj.startValue = content.innerHTML;
             setCaretCharIndex(content, this.undoPosition);
-            wasUndo = true;
+            obj.wasUndo = true;
         },
 
         redo: function () {
             this.textarea.innerHTML = this.newValue;
-            startValue = content.innerHTML;
+            obj.startValue = content.innerHTML;
             setCaretCharIndex(content, this.redoPosition);
         }
     });
 
     function stackUI() {
-        canRedo = stack.canRedo();
-        canUndo = stack.canUndo();
+        obj.canRedo = obj.stack.canRedo();
+        obj.canUndo = obj.stack.canUndo();
     }
 
     stackUI();
     //Triggering changes at stack
-    stack.changed = function () {
+    obj.stack.changed = function () {
         stackUI();
     };
 }
 
 //Executing at changes in editor with timeout and save changes to stack
 //On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
-var execute = function (timeout, e) {
+var execute = function (timeout, e, obj) {
+    var content = obj.content();
     //Don't catch ctrl/cmd+z, ctrl/cmd+y events
-    if (meta) {
+    if (obj.meta) {
         return;
     }
     //Don't set 250 ms timeout if it's first phrase in editor, or if it first change after undo event,
     //because we need to catch it exactly from beginning
-    if (wasUndo || !content.hasChildNodes()) {
+    if (obj.wasUndo || !content.hasChildNodes()) {
         timeout = 0;
     }
-    clearTimeout(timer);
+    clearTimeout(obj.timer);
 
-    timer = setTimeout(function () {
+    obj.timer = setTimeout(function () {
         var range = window.getSelection().getRangeAt(0),
             doNotExecute = false,
             newValue = content.innerHTML,
-            undoPosition = position,
+            undoPosition = obj.position,
             redoPosition = getCharacterOffsetWithin(range, content);
         //Handle and don't save if nothing was changed or was 'new line' event
-        if (undoPosition === redoPosition || (!executeOnInsert && e.keyCode === 13)) {
-            wasUndo = false;
+        if (undoPosition === redoPosition || (!obj.executeOnInsert && e.keyCode === 13)) {
+            obj.wasUndo = false;
             return;
         }
         //Save new caret position if start typing after undo event
-        if (wasUndo) {
-            undoPosition = stack.stackPosition >= 0 ? stack.commands[stack.stackPosition].redoPosition : stack.commands[0].redoPosition;
+        if (obj.wasUndo) {
+            undoPosition = obj.stack.stackPosition >= 0 ? obj.stack.commands[obj.stack.stackPosition].redoPosition : obj.stack.commands[0].redoPosition;
         }
         //Catch mouse clicking and arrow keys events
-        else if (undoPosition !== redoPosition && newValue === startValue) {
+        else if (undoPosition !== redoPosition && newValue === obj.startValue) {
             //Save only last one from series
-            if (cursorChange) {
-                stack.commands[stack.commands.length - 1].redoPosition = redoPosition;
+            if (obj.cursorChange) {
+                obj.stack.commands[obj.stack.commands.length - 1].redoPosition = redoPosition;
                 doNotExecute = true;
             }
             else {
-                cursorChange = true;
+                obj.cursorChange = true;
             }
         }
         else {
-            cursorChange = false;
+            obj.cursorChange = false;
         }
         if (!doNotExecute) {
-            stack.execute(new EditCommand(content, startValue, newValue, undoPosition, redoPosition));
+            obj.stack.execute(new obj.EditCommand(content, obj.startValue, newValue, undoPosition, redoPosition));
         }
-        startValue = newValue;
-        position = redoPosition;
-        wasUndo = false;
-        setExecuteOnInsert(false);
+        obj.startValue = newValue;
+        obj.position = redoPosition;
+        obj.wasUndo = false;
+        obj.executeOnInsert = false;
     }, timeout);
 };
 
-//Return boolean canRedo value (true if redo event is possible)
-function getCanRedo(){
-    return canRedo;
-}
-
-//Return boolean canUndo value (true if undo event is possible)
-function getCanUndo(){
-    return canUndo;
-}
-
-//Set meta value
-function setMeta(val){
-    meta = val;
-}
-
-//Return boolean meta value (true if meta key was pressed)
-function getMeta(){
-    return meta;
-}
-
-//Set executeOnInsert value
-function setExecuteOnInsert(val){
-    executeOnInsert = val;
-}
-
-export{execute,getCanRedo,getCanUndo,stack,setMeta, getMeta, setExecuteOnInsert, initStack};
+export{execute, initStack};
