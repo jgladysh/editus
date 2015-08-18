@@ -103,7 +103,7 @@ function makeEditable(contentId, obj) {
 }
 
 function addSuggestionsPopover(obj) {
-    var popoverString = "<div style = \'position : absolute\' id='" +
+    var popoverString = "<div style = \'position : absolute\' class = 'popoverContainer' id='" +
         obj.popoverContainerId +
         "'><a href=\"#\" title=\"\" data-toggle=\"popover\" id='" +
         obj.popoverId +
