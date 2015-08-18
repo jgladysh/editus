@@ -10,25 +10,48 @@ var makeEditable = _dereq_("./main").makeEditable;
 
 var initStack = _dereq_("./undo_redo").initStack;
 
-var setKeyWordsArray = _dereq_("./highlighting").setKeyWordsArray;
+function Editus(id) {
+    this.editorId = id;
+    this.content = function () {
+        return document.getElementById(id);
+    };
+    this.startValue = id ? document.getElementById(id).innerHTML : undefined;
+    this.EditCommand = undefined;
+    this.stack = undefined;
+    this.timer = 0;
+    this.canRedo = false;
+    this.canUndo = false;
+    this.wasUndo = false;
+    this.position = 0;
+    this.executeOnInsert = false;
+    this.cursorChange = false;
+    this.meta = false;
+    this.popUp = false;
+    this.chosen = undefined;
+    this.$current = undefined;
+    this.popoverContainerId = "popoverContainer" + "_" + id;
+    this.popoverId = "popover" + "_" + id;
+    this.popoverContainer = id ? document.getElementById(this.popoverContainerId) : undefined;
+    this.popov = id ? document.getElementById(this.popoverId) : undefined;
 
-// Create editor from contentEditable div
-var createEditor = function createEditor(id) {
-    initStack(id);
-    makeEditable(id);
+    initStack(this);
+    makeEditable(this.editorId, this);
+
+    // Add words to be highlighted
+    this.setHighlightingWords = function (arr) {
+        if (arr && arr.length >= 0) {
+            this.keyWordsArray = arr;
+        }
+    };
+}
+
+var initEditus = function initEditus(id) {
+    return new Editus(id);
 };
 
-// Add words to be highlighted
-var setHighlightingWords = function setHighlightingWords(arr) {
-    if (arr && arr.length >= 0) {
-        setKeyWordsArray(arr);
-    }
-};
+exports.initEditus = initEditus;
 
-exports.createEditor = createEditor;
-exports.setHighlightingWords = setHighlightingWords;
-
-},{"./highlighting":3,"./main":4,"./undo_redo":6}],2:[function(_dereq_,module,exports){
+},{"./main":4,"./undo_redo":6}],2:[function(_dereq_,module,exports){
 (function (global){
 "use strict";
 
@@ -121,8 +144,6 @@ Object.defineProperty(exports, "__esModule", {
  */
 "use strict";
 
-var setProcessing = _dereq_("./main").setProcessing;
-
 var _caret = _dereq_("./caret");
 
 var setCaretCharIndex = _caret.setCaretCharIndex;
@@ -130,21 +151,18 @@ var getCharacterOffsetWithin = _caret.getCharacterOffsetWithin;
 
 (typeof window !== "undefined" ? window['jquery'] : typeof global !== "undefined" ? global['jquery'] : null);
 
-//Array of words, that should be highlighted
-var keyWordsArray;
-
 //Recursively check every element in contentEditable node
-function checkEveryTag(node) {
-    if (keyWordsArray) {
+function checkEveryTag(node, obj) {
+    if (obj.keyWordsArray) {
         if (node.childNodes.length > 0) {
             for (var i = 0; i < node.childNodes.length; i++) {
                 if (node.childNodes[i].data && node.childNodes[i].data !== "" || node.childNodes[i].nodeName === "DIV") {
-                    checkEveryTag(node.childNodes[i]);
+                    checkEveryTag(node.childNodes[i], obj);
                 }
             }
         } else {
-            var ranges = makeRangesFromMatches(keyWordsArray, node);
-            wrapNodes(ranges);
+            var ranges = makeRangesFromMatches(obj.keyWordsArray, node);
+            wrapNodes(ranges, obj);
         }
     }
 }
@@ -182,28 +200,27 @@ function makeRangesFromMatches(arr, node) {
 }
 
 //Wrap every range element from ranges array with 'highlighted' span tag
-function wrapNodes(ranges) {
+function wrapNodes(ranges, obj) {
     for (var i = 0; i < ranges.length; i++) {
         var highlightTag = document.createElement("span");
         highlightTag.className = "highlighted";
-        $(highlightTag).data("content", ranges[i].toString());
+        $(highlightTag).data(obj.editorId, ranges[i].toString());
         ranges[i].surroundContents(highlightTag);
     }
 }
 
 //Check every highlighted node for changes
-function checkHighlighted(e, id) {
-    if (keyWordsArray) {
+function checkHighlighted(e, obj) {
+    if (obj.keyWordsArray) {
         var sel = window.getSelection(),
             anchorNode = sel.anchorNode,
             nextNode = anchorNode.nextElementSibling,
-            content = document.getElementById(id),
+            content = obj.content(),
             nodeToCheck = sel.baseNode.parentElement;
         //Handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
         if (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === "SPAN")) {
             $(nextNode).contents().unwrap();
             content.normalize();
-            setProcessing(true);
         }
         if (nodeToCheck.className === "highlighted" || sel.baseNode.className === "highlighted") {
             var range = sel.getRangeAt(0),
@@ -211,7 +228,7 @@ function checkHighlighted(e, id) {
                 highlighted = $(".highlighted");
             for (var i = 0; i < highlighted.length; i++) {
                 var text = $(highlighted[i]).text();
-                if (!new RegExp(keyWordsArray.map(function (w) {
+                if (!new RegExp(obj.keyWordsArray.map(function (w) {
                     return "^" + w + "$";
                 }).join("|"), "gi").test(text)) {
                     $(highlighted[i]).contents().unwrap();
@@ -225,16 +242,11 @@ function checkHighlighted(e, id) {
     }
 }
 
-function setKeyWordsArray(val) {
-    keyWordsArray = val;
-}
-
 exports.checkHighlighted = checkHighlighted;
 exports.checkEveryTag = checkEveryTag;
-exports.setKeyWordsArray = setKeyWordsArray;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./caret":2,"./main":4}],4:[function(_dereq_,module,exports){
+},{"./caret":2}],4:[function(_dereq_,module,exports){
 (function (global){
 "use strict";
 
@@ -261,82 +273,63 @@ var checkEveryTag = _highlighting.checkEveryTag;
 
 var _suggestion = _dereq_("./suggestion");
 
-var getPopUp = _suggestion.getPopUp;
 var initialisePopover = _suggestion.initialisePopover;
 var listScroll = _suggestion.listScroll;
 var destroyPopUp = _suggestion.destroyPopUp;
 
-var _undo_redo = _dereq_("./undo_redo");
-
-var stack = _undo_redo.stack;
-var getCanRedo = _undo_redo.getCanRedo;
-var getCanUndo = _undo_redo.getCanUndo;
-var execute = _undo_redo.execute;
-var setMeta = _undo_redo.setMeta;
-var getMeta = _undo_redo.getMeta;
-
-var processing = false,
-    id,
-    content,
-    popoverString = "<div class='popoverContainer' style='position: absolute;'><a href=\"#\" title=\"\" data-toggle=\"popover\" data-content=\"\" data-placement=\"bottom\"></a> </div>";
+var execute = _dereq_("./undo_redo").execute;
 
 //Executing on key down event
-function processKeyDown(e) {
+function processKeyDown(e, id, obj) {
     var d = new $.Deferred();
     //Handling events at suggestion popover
-    if (getPopUp() && (e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 13)) {
+    if (obj.popUp && (e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 13)) {
         e.preventDefault();
-        listScroll(e);
+        listScroll(e, obj);
         return d.reject();
-    } else if (getPopUp()) {
-        destroyPopUp();
+    } else if (obj.popUp) {
+        destroyPopUp(obj);
     }
     //Showing of popup with suggestions at current cursor position
     if (e.shiftKey && e.keyCode === 32) {
         e.preventDefault();
         var position = getCursorCoordinates();
-        initialisePopover(position.top + 25, position.left, id);
+        initialisePopover(position.top + 25, position.left, id, obj);
         return d.reject();
     }
     //Handling of undo/redo events
     if (e.metaKey && e.keyCode !== 65 && e.keyCode !== 88 && e.keyCode !== 86 && e.keyCode !== 67) {
         e.preventDefault();
-        setMeta(true);
+        obj.meta = true;
 
-        if (e.metaKey && e.keyCode === 90 && getCanUndo()) {
-            stack.undo();
-        } else if (e.metaKey && e.keyCode === 89 && getCanRedo()) {
-            stack.redo();
+        if (e.metaKey && e.keyCode === 90 && obj.canUndo) {
+            obj.stack.undo();
+        } else if (e.metaKey && e.keyCode === 89 && obj.canRedo) {
+            obj.stack.redo();
         }
     }
     return d.promise();
 }
 
 //Executing on key up event
-function processKeyUp(e) {
+function processKeyUp(e, content, id, obj) {
     //Return if text was selected
     if (window.getSelection().type === "Range") {
         return;
     }
     //Handling space, 'enter' and undo/redo events
-    if (e.keyCode === 32 || e.keyCode === 13 || e.keyCode === 8 || getMeta()) {
-        processing = true;
-        setMeta(false);
+    if (e.keyCode === 32 || e.keyCode === 13 || e.keyCode === 8 || obj.meta) {
+        obj.meta = false;
     }
     //Handling arrow buttons events
     if (e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
-        checkHighlighted(e, id);
-    } else {
-        processing = true;
+        checkHighlighted(e, obj);
     }
-
-    if (processing) {
-        process(content);
-    }
+    process(content, obj);
 }
 
 //Check text for words to highlight and set caret to current position
-function process(content) {
+function process(content, obj) {
     var d = new $.Deferred();
 
     if (content.firstChild !== null) {
@@ -349,9 +342,9 @@ function process(content) {
             return d.resolve();
         }
 
-        checkEveryTag(content);
+        checkEveryTag(content, obj);
         //Don't manually set caret in case of moving to new line
-        if (getMeta() && offset === 0 && selection.baseNode.nodeName === "DIV" || !getMeta() && offset === 0) {
+        if (obj.meta && offset === 0 && selection.baseNode.nodeName === "DIV" || !obj.meta && offset === 0) {
             return d.promise();
         } else {
             setCaretCharIndex(content, char);
@@ -360,40 +353,38 @@ function process(content) {
     return d.promise();
 }
 
-//Set boolean processing value
-function setProcessing(val) {
-    processing = val;
-}
-
 //Make editor from contentEditable node
-function makeEditable(contentId) {
-    id = contentId;
-    content = document.getElementById(id);
+function makeEditable(contentId, obj) {
+
+    var id = contentId;
+    var content = obj.content();
 
     if (content.nodeName !== "DIV") {
         throw "Editable element must be DIV";
     }
-    $(content).after(popoverString);
-    addEvents(content);
+
+    addSuggestionsPopover(obj);
+    addEvents(content, id, obj);
+}
+
+function addSuggestionsPopover(obj) {
+    var popoverString = "<div style = 'position : absolute' class = 'popoverContainer' id='" + obj.popoverContainerId + "'><a href=\"#\" title=\"\" data-toggle=\"popover\" id='" + obj.popoverId + "'data-content=\"\" data-placement=\"bottom\"></a></div>";
+    $(obj.content()).after(popoverString);
 }
 
 //Add events to contentEditable node
-function addEvents(content) {
+function addEvents(content, id, obj) {
     content.onkeyup = function (event) {
-        processKeyUp(event);
+        processKeyUp(event, content, id, obj);
     };
     content.onkeydown = function (event) {
-        processKeyDown(event).then(execute(250, event), function () {});
+        processKeyDown(event, id, obj).then(execute(250, event, obj), function () {});
     };
     content.onmouseup = function () {
-        process(content).then(execute(0, event), function () {});
+        process(content, obj).then(execute(0, event, obj), function () {});
     };
 }
 
-exports.setProcessing = setProcessing;
-exports.processKeyDown = processKeyDown;
-exports.processKeyUp = processKeyUp;
-exports.process = process;
 exports.makeEditable = makeEditable;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -411,9 +402,7 @@ Object.defineProperty(exports, "__esModule", {
  */
 "use strict";
 
-var _undo_redo = _dereq_("./undo_redo");
-
-var execute = _undo_redo.execute;
+var execute = _dereq_("./undo_redo").execute;
 
 var _caret = _dereq_("./caret");
 
@@ -422,108 +411,93 @@ var getCharacterOffsetWithin = _caret.getCharacterOffsetWithin;
 
 var checkHighlighted = _dereq_("./highlighting").checkHighlighted;
 
-var setExecuteOnInsert = _undo_redo.setExecuteOnInsert;
-
 (typeof window !== "undefined" ? window['jquery'] : typeof global !== "undefined" ? global['jquery'] : null);
 
 var jQuery = _interopRequire((typeof window !== "undefined" ? window['jquery'] : typeof global !== "undefined" ? global['jquery'] : null));
 
 (typeof window !== "undefined" ? window['bootstrap'] : typeof global !== "undefined" ? global['bootstrap'] : null);
 
-var popoverContainer,
-    pop,
-    id,
-    popUp = false,
-    chosen,
-    $current,
-    suggestions = $.parseHTML("<div class=\"list-group\"><a href=\"#\" class=\"list-group-item\">Item 1</a><a href=\"#\" class=\"list-group-item\">Item 2</a> <a href=\"#\" class=\"list-group-item\">Item 3</a> <a href=\"#\" class=\"list-group-item\">Item 4</a> <a href=\"#\" class=\"list-group-item\">Item 5</a> </div>")[0];
+var suggestions = $.parseHTML("<div class=\"list-group\"><a href=\"#\" class=\"list-group-item\">Item 1</a><a href=\"#\" class=\"list-group-item\">Item 2</a> <a href=\"#\" class=\"list-group-item\">Item 3</a> <a href=\"#\" class=\"list-group-item\">Item 4</a> <a href=\"#\" class=\"list-group-item\">Item 5</a> </div>")[0];
 
 //Popover initialisation
-function initialisePopover(top, left, contentId) {
-    id = contentId;
-    popoverContainer = $(".popoverContainer")[0];
-    pop = $("[data-toggle=\"popover\"]");
-    chosen = undefined;
-    $current = undefined;
-    pop.popover({ html: true, content: suggestions });
+function initialisePopover(top, left, contentId, obj) {
+    var popoverContainer = obj.popoverContainer();
+    var pop = obj.popov();
+    obj.chosen = undefined;
+    obj.$current = undefined;
+    $(pop).popover({ html: true, content: suggestions });
     popoverContainer.style.top = top + "px";
     popoverContainer.style.left = left + "px";
 
-    pop.popover("show");
-    popUp = true;
+    $(pop).popover("show");
+    obj.popUp = true;
     //Destroy popover when user takes away mouse from it
     $(".popover").mouseleave(function () {
-        destroyPopUp();
-        popUp = false;
+        destroyPopUp(obj);
+        obj.popUp = false;
     });
     //Triggering of choosing popup item with mouse
     $(".popover").on("mousedown", "a", function (e) {
         e.preventDefault();
-        chosen = e.currentTarget.innerText;
-        destroyPopUp();
-        popUp = false;
-        insertNodeAtCursor(document.createTextNode(chosen));
-        checkHighlighted(e, id);
-        execute(0, e);
+        obj.chosen = e.currentTarget.innerText;
+        destroyPopUp(obj);
+        obj.popUp = false;
+        insertNodeAtCursor(document.createTextNode(obj.chosen), obj);
+        checkHighlighted(e, obj);
+        execute(0, e, obj);
     });
 }
 
 //Handling Up/Down/Enter buttons in popover
-function listScroll(e) {
+function listScroll(e, obj) {
     var key = e.keyCode,
         $listItems = $(".list-group-item"),
         $selected = $listItems.filter(".selected");
 
     $listItems.removeClass("selected");
     //Handling Enter button
-    if (key === 13 && $current) {
-        chosen = $($current[0]).html();
-        destroyPopUp();
-        popUp = false;
-        insertNodeAtCursor(document.createTextNode(chosen));
+    if (key === 13 && obj.$current) {
+        obj.chosen = $(obj.$current[0]).html();
+        destroyPopUp(obj);
+        obj.popUp = false;
+        insertNodeAtCursor(document.createTextNode(obj.chosen), obj);
         return;
     }
     //Handling Down button
     if (key === 40) {
         if (!$selected.length || $selected.is(":last-child")) {
-            $current = $listItems.eq(0);
+            obj.$current = $listItems.eq(0);
         } else {
-            $current = $selected.next();
+            obj.$current = $selected.next();
         }
     }
     //Handling Up button
     else if (key === 38) {
         if (!$selected.length || $selected.is(":first-child")) {
-            $current = $listItems.last();
+            obj.$current = $listItems.last();
         } else {
-            $current = $selected.prev();
+            obj.$current = $selected.prev();
         }
     }
-    $current.addClass("selected");
+    obj.$current.addClass("selected");
 }
 
 //Insert node at current cursor position
-function insertNodeAtCursor(node) {
-    var content = document.getElementById(id);
+function insertNodeAtCursor(node, obj) {
+    var content = obj.content();
     var range = window.getSelection().getRangeAt(0);
     var char = getCharacterOffsetWithin(range, content);
     range.insertNode(node);
     content.normalize();
     setCaretCharIndex(content, char + node.length);
-    setExecuteOnInsert(true);
-}
-
-//Return boolean value (true, if popover displayed)
-function getPopUp() {
-    return popUp;
+    obj.executeOnInsert = true;
 }
 
 //Destroy popover
-function destroyPopUp() {
-    pop.popover("destroy");
+function destroyPopUp(obj) {
+    $(obj.popov()).popover("destroy");
 }
 
-exports.getPopUp = getPopUp;
 exports.initialisePopover = initialisePopover;
 exports.listScroll = listScroll;
 exports.destroyPopUp = destroyPopUp;
@@ -551,25 +525,12 @@ var getCharacterOffsetWithin = _caret.getCharacterOffsetWithin;
 
 (typeof window !== "undefined" ? window['undo'] : typeof global !== "undefined" ? global['undo'] : null);
 
-var startValue,
-    EditCommand,
-    timer,
-    canRedo,
-    canUndo,
-    wasUndo,
-    content,
-    position = 0,
-    executeOnInsert = false,
-    cursorChange = false,
-    meta = false,
-    stack = new Undo.Stack();
-
 //Configuring of stack commands for undo/redo events
-function initStack(id) {
-    content = document.getElementById(id);
-    startValue = content.innerHTML;
+function initStack(obj) {
+    var content = obj.content();
+    obj.stack = new Undo.Stack();
 
-    EditCommand = Undo.Command.extend({
+    obj.EditCommand = Undo.Command.extend({
         constructor: function constructor(textarea, oldValue, newValue, undoPosition, redoPosition) {
             this.textarea = textarea;
             this.oldValue = oldValue;
@@ -580,113 +541,83 @@ function initStack(id) {
         execute: function execute() {},
         undo: function undo() {
             this.textarea.innerHTML = this.oldValue;
-            startValue = content.innerHTML;
+            obj.startValue = content.innerHTML;
             setCaretCharIndex(content, this.undoPosition);
-            wasUndo = true;
+            obj.wasUndo = true;
         },
 
         redo: function redo() {
             this.textarea.innerHTML = this.newValue;
-            startValue = content.innerHTML;
+            obj.startValue = content.innerHTML;
             setCaretCharIndex(content, this.redoPosition);
         }
     });
 
     function stackUI() {
-        canRedo = stack.canRedo();
-        canUndo = stack.canUndo();
+        obj.canRedo = obj.stack.canRedo();
+        obj.canUndo = obj.stack.canUndo();
     }
 
     stackUI();
     //Triggering changes at stack
-    stack.changed = function () {
+    obj.stack.changed = function () {
         stackUI();
     };
 }
 
 //Executing at changes in editor with timeout and save changes to stack
 //On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
-var execute = function execute(timeout, e) {
+var execute = function execute(timeout, e, obj) {
+    var content = obj.content();
     //Don't catch ctrl/cmd+z, ctrl/cmd+y events
-    if (meta) {
+    if (obj.meta) {
         return;
     }
     //Don't set 250 ms timeout if it's first phrase in editor, or if it first change after undo event,
     //because we need to catch it exactly from beginning
-    if (wasUndo || !content.hasChildNodes()) {
+    if (obj.wasUndo || !content.hasChildNodes()) {
         timeout = 0;
     }
-    clearTimeout(timer);
+    clearTimeout(obj.timer);
 
-    timer = setTimeout(function () {
+    obj.timer = setTimeout(function () {
         var range = window.getSelection().getRangeAt(0),
             doNotExecute = false,
             newValue = content.innerHTML,
-            undoPosition = position,
+            undoPosition = obj.position,
             redoPosition = getCharacterOffsetWithin(range, content);
         //Handle and don't save if nothing was changed or was 'new line' event
-        if (undoPosition === redoPosition || !executeOnInsert && e.keyCode === 13) {
-            wasUndo = false;
+        if (undoPosition === redoPosition || !obj.executeOnInsert && e.keyCode === 13) {
+            obj.wasUndo = false;
             return;
         }
         //Save new caret position if start typing after undo event
-        if (wasUndo) {
-            undoPosition = stack.stackPosition >= 0 ? stack.commands[stack.stackPosition].redoPosition : stack.commands[0].redoPosition;
+        if (obj.wasUndo) {
+            undoPosition = obj.stack.stackPosition >= 0 ? obj.stack.commands[obj.stack.stackPosition].redoPosition : obj.stack.commands[0].redoPosition;
         }
         //Catch mouse clicking and arrow keys events
-        else if (undoPosition !== redoPosition && newValue === startValue) {
+        else if (undoPosition !== redoPosition && newValue === obj.startValue) {
             //Save only last one from series
-            if (cursorChange) {
-                stack.commands[stack.commands.length - 1].redoPosition = redoPosition;
+            if (obj.cursorChange) {
+                obj.stack.commands[obj.stack.commands.length - 1].redoPosition = redoPosition;
                 doNotExecute = true;
             } else {
-                cursorChange = true;
+                obj.cursorChange = true;
             }
         } else {
-            cursorChange = false;
+            obj.cursorChange = false;
         }
         if (!doNotExecute) {
-            stack.execute(new EditCommand(content, startValue, newValue, undoPosition, redoPosition));
+            obj.stack.execute(new obj.EditCommand(content, obj.startValue, newValue, undoPosition, redoPosition));
         }
-        startValue = newValue;
-        position = redoPosition;
-        wasUndo = false;
-        setExecuteOnInsert(false);
+        obj.startValue = newValue;
+        obj.position = redoPosition;
+        obj.wasUndo = false;
+        obj.executeOnInsert = false;
     }, timeout);
 };
 
-//Return boolean canRedo value (true if redo event is possible)
-function getCanRedo() {
-    return canRedo;
-}
-
-//Return boolean canUndo value (true if undo event is possible)
-function getCanUndo() {
-    return canUndo;
-}
-
-//Set meta value
-function setMeta(val) {
-    meta = val;
-}
-
-//Return boolean meta value (true if meta key was pressed)
-function getMeta() {
-    return meta;
-}
-
-//Set executeOnInsert value
-function setExecuteOnInsert(val) {
-    executeOnInsert = val;
-}
-
 exports.execute = execute;
-exports.getCanRedo = getCanRedo;
-exports.getCanUndo = getCanUndo;
-exports.stack = stack;
-exports.setMeta = setMeta;
-exports.getMeta = getMeta;
-exports.setExecuteOnInsert = setExecuteOnInsert;
 exports.initStack = initStack;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})

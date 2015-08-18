@@ -8,7 +8,7 @@ function Editus(id) {
     this.content = function () {
         return document.getElementById(id);
     };
-    this.startValue = this.content().innerHTML;
+    this.startValue = id ? document.getElementById(id).innerHTML : undefined;
     this.EditCommand = undefined;
     this.stack = undefined;
     this.timer = 0;
@@ -22,14 +22,10 @@ function Editus(id) {
     this.popUp = false;
     this.chosen = undefined;
     this.$current = undefined;
-    this.popoverContainerId = 'popoverContainer' + '_' + this.editorId;
-    this.popoverId = 'popover' + '_' + this.editorId;
-    this.popoverContainer = function () {
-        return document.getElementById(this.popoverContainerId);
-    };
-    this.popov = function () {
-        return document.getElementById(this.popoverId);
-    };
+    this.popoverContainerId = 'popoverContainer' + '_' + id;
+    this.popoverId = 'popover' + '_' + id;
+    this.popoverContainer = id ? document.getElementById(this.popoverContainerId) : undefined;
+    this.popov = id ? document.getElementById(this.popoverId) : undefined;
 
     initStack(this);
     makeEditable(this.editorId, this);
@@ -47,6 +43,4 @@ var initEditus = function (id) {
     return new Editus(id);
 };
 
-window.Editus = Editus;
-window.initEditus = initEditus;
-//export {createEditor, setHighlightingWords};
+export {initEditus};
