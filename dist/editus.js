@@ -31,8 +31,13 @@ function Editus(id) {
     this.$current = undefined;
     this.popoverContainerId = "popoverContainer" + "_" + id;
     this.popoverId = "popover" + "_" + id;
-    this.popoverContainer = id ? document.getElementById(this.popoverContainerId) : undefined;
-    this.popov = id ? document.getElementById(this.popoverId) : undefined;
+    this.popoverContainer = function () {
+        return document.getElementById(this.popoverContainerId);
+    };
+    this.popov = function () {
+        return document.getElementById(this.popoverId);
+    };
+    this.suggestionUrl = "http://localhost:3000/";
 
     initStack(this);
     makeEditable(this.editorId, this);
@@ -280,7 +285,7 @@ var destroyPopUp = _suggestion.destroyPopUp;
 var execute = _dereq_("./undo_redo").execute;
 
 //Executing on key down event
-function processKeyDown(e, id, obj) {
+function processKeyDown(e, obj) {
     var d = new $.Deferred();
     //Handling events at suggestion popover
     if (obj.popUp && (e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 13)) {
@@ -294,7 +299,7 @@ function processKeyDown(e, id, obj) {
     if (e.shiftKey && e.keyCode === 32) {
         e.preventDefault();
         var position = getCursorCoordinates();
-        initialisePopover(position.top + 25, position.left, id, obj);
+        initialisePopover(position.top + 25, position.left, obj);
         return d.reject();
     }
     //Handling of undo/redo events
@@ -378,13 +383,12 @@ function addEvents(content, id, obj) {
         processKeyUp(event, content, id, obj);
     };
     content.onkeydown = function (event) {
-        processKeyDown(event, id, obj).then(execute(250, event, obj), function () {});
+        processKeyDown(event, obj).then(execute(250, event, obj), function () {});
     };
     content.onmouseup = function () {
         process(content, obj).then(execute(0, event, obj), function () {});
     };
 }
-
 exports.makeEditable = makeEditable;
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
@@ -417,35 +421,15 @@ var jQuery = _interopRequire((typeof window !== "undefined" ? window['jquery'] :
 
 (typeof window !== "undefined" ? window['bootstrap'] : typeof global !== "undefined" ? global['bootstrap'] : null);
 
-var suggestions = $.parseHTML("<div class=\"list-group\"><a href=\"#\" class=\"list-group-item\">Item 1</a><a href=\"#\" class=\"list-group-item\">Item 2</a> <a href=\"#\" class=\"list-group-item\">Item 3</a> <a href=\"#\" class=\"list-group-item\">Item 4</a> <a href=\"#\" class=\"list-group-item\">Item 5</a> </div>")[0];
-
+//var suggestions = $.parseHTML('<div class="list-group"><a href="#" class="list-group-item">Item 1</a><a href="#" class="list-group-item">Item 2</a> <a href="#" class="list-group-item">Item 3</a> <a href="#" class="list-group-item">Item 4</a> <a href="#" class="list-group-item">Item 5</a> </div>')[0];
 //Popover initialisation
-function initialisePopover(top, left, contentId, obj) {
+function initialisePopover(top, left, obj) {
+
     var popoverContainer = obj.popoverContainer();
-    var pop = obj.popov();
-    obj.chosen = undefined;
-    obj.$current = undefined;
-    $(pop).popover({ html: true, content: suggestions });
     popoverContainer.style.top = top + "px";
     popoverContainer.style.left = left + "px";
 
-    $(pop).popover("show");
-    obj.popUp = true;
-    //Destroy popover when user takes away mouse from it
-    $(".popover").mouseleave(function () {
-        destroyPopUp(obj);
-        obj.popUp = false;
-    });
-    //Triggering of choosing popup item with mouse
-    $(".popover").on("mousedown", "a", function (e) {
-        e.preventDefault();
-        obj.chosen = e.currentTarget.innerText;
-        destroyPopUp(obj);
-        obj.popUp = false;
-        insertNodeAtCursor(document.createTextNode(obj.chosen), obj);
-        checkHighlighted(e, obj);
-        execute(0, e, obj);
-    });
+    makeCorsRequest(obj);
 }
 
 //Handling Up/Down/Enter buttons in popover
@@ -498,6 +482,75 @@ function destroyPopUp(obj) {
     $(obj.popov()).popover("destroy");
 }
 
+//Pick and form data for request
+function makeJsonForSuggestions(obj) {
+    return JSON.stringify({
+        text: obj.content().innerHTML,
+        cursorPosition: getCharacterOffsetWithin(window.getSelection().getRangeAt(0), obj.content())
+    });
+}
+
+// Create the XHR object.
+function createCORSRequest(method, url, data) {
+    var xhr = new XMLHttpRequest();
+    if ("withCredentials" in xhr) {
+        xhr.open(method, url, true);
+        xhr.setRequestHeader("dataType", "json");
+        xhr.setRequestHeader("data", data);
+    } else {
+        // CORS not supported.
+        xhr = null;
+    }
+    return xhr;
+}
+
+// Make the actual CORS request.
+function makeCorsRequest(obj) {
+
+    var data = makeJsonForSuggestions(obj);
+    var xhr = createCORSRequest("POST", obj.suggestionUrl, data);
+    if (!xhr) {
+        throw "CORS not supported";
+    }
+
+    xhr.onload = function () {
+
+        var text = xhr.responseText;
+        console.log("Response from CORS request to " + obj.suggestionUrl + ": " + text);
+
+        showPopover(obj, text);
+    };
+
+    xhr.onerror = function () {
+        console.log("There was an error making the request.");
+    };
+
+    xhr.send();
+}
+
+//Fill, add events and show popover
+function showPopover(obj, text) {
+    var pop = obj.popov();
+    $(pop).popover({ html: true, content: text });
+    $(pop).popover("show");
+    obj.popUp = true;
+
+    //Destroy popover when user takes away mouse from it
+    $(".popover").mouseleave(function () {
+        destroyPopUp(obj);
+        obj.popUp = false;
+    });
+    //Triggering of choosing popup item with mouse
+    $(".popover").on("mousedown", "a", function (e) {
+        e.preventDefault();
+        obj.chosen = e.currentTarget.innerText;
+        destroyPopUp(obj);
+        obj.popUp = false;
+        insertNodeAtCursor(document.createTextNode(obj.chosen), obj);
+        checkHighlighted(e, obj);
+        execute(0, e, obj);
+    });
+}
 exports.initialisePopover = initialisePopover;
 exports.listScroll = listScroll;
 exports.destroyPopUp = destroyPopUp;

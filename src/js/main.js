@@ -10,7 +10,7 @@ import{initialisePopover, listScroll, destroyPopUp} from './suggestion';
 import {execute} from './undo_redo';
 
 //Executing on key down event
-function processKeyDown(e, id, obj) {
+function processKeyDown(e, obj) {
     var d = new $.Deferred();
     //Handling events at suggestion popover
     if (obj.popUp && (e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 13)) {
@@ -25,7 +25,7 @@ function processKeyDown(e, id, obj) {
     if (e.shiftKey && e.keyCode === 32) {
         e.preventDefault();
         var position = getCursorCoordinates();
-        initialisePopover(position.top + 25, position.left, id, obj);
+        initialisePopover(position.top + 25, position.left, obj);
         return d.reject();
     }
     //Handling of undo/redo events
@@ -117,7 +117,7 @@ function addEvents(content, id, obj) {
         processKeyUp(event, content, id, obj);
     };
     content.onkeydown = function (event) {
-        processKeyDown(event, id, obj).then(execute(250, event, obj), function () {
+        processKeyDown(event, obj).then(execute(250, event, obj), function () {
         });
     };
     content.onmouseup = function () {
@@ -125,5 +125,4 @@ function addEvents(content, id, obj) {
         });
     };
 }
-
 export {makeEditable};

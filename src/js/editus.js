@@ -24,8 +24,13 @@ function Editus(id) {
     this.$current = undefined;
     this.popoverContainerId = 'popoverContainer' + '_' + id;
     this.popoverId = 'popover' + '_' + id;
-    this.popoverContainer = id ? document.getElementById(this.popoverContainerId) : undefined;
-    this.popov = id ? document.getElementById(this.popoverId) : undefined;
+    this.popoverContainer = function () {
+        return document.getElementById(this.popoverContainerId);
+    };
+    this.popov = function () {
+        return document.getElementById(this.popoverId);
+    };
+    this.suggestionUrl = 'http://localhost:3000/';
 
     initStack(this);
     makeEditable(this.editorId, this);
