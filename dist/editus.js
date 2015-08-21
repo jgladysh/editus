@@ -12,9 +12,6 @@ var initStack = _dereq_("./undo_redo").initStack;
 
 function Editus(id) {
     this.editorId = id;
-    this.content = function () {
-        return document.getElementById(id);
-    };
     this.startValue = id ? document.getElementById(id).innerHTML : undefined;
     this.EditCommand = undefined;
     this.stack = undefined;
@@ -31,16 +28,16 @@ function Editus(id) {
     this.$current = undefined;
     this.popoverContainerId = "popoverContainer" + "_" + id;
     this.popoverId = "popover" + "_" + id;
+    this.suggestionUrl = undefined;
+    this.content = function () {
+        return document.getElementById(id);
+    };
     this.popoverContainer = function () {
         return document.getElementById(this.popoverContainerId);
     };
     this.popov = function () {
         return document.getElementById(this.popoverId);
     };
-    this.suggestionUrl = "http://localhost:3000/";
-
-    initStack(this);
-    makeEditable(this.editorId, this);
 
     // Add words to be highlighted
     this.setHighlightingWords = function (arr) {
@@ -48,6 +45,13 @@ function Editus(id) {
             this.keyWordsArray = arr;
         }
     };
+    //Setting of service url presume actual suggestions from server side
+    this.setSuggestionsService = function (url) {
+        this.suggestionUrl = url;
+    };
+
+    initStack(this);
+    makeEditable(this.editorId, this);
 }
 
 var initEditus = function initEditus(id) {
@@ -296,11 +300,13 @@ function processKeyDown(e, obj) {
         destroyPopUp(obj);
     }
     //Showing of popup with suggestions at current cursor position
-    if (e.shiftKey && e.keyCode === 32) {
-        e.preventDefault();
-        var position = getCursorCoordinates();
-        initialisePopover(position.top + 25, position.left, obj);
-        return d.reject();
+    if (e.ctrlKey && e.keyCode === 32) {
+        if (obj.suggestionUrl) {
+            e.preventDefault();
+            var position = getCursorCoordinates();
+            initialisePopover(position.top + 25, position.left, obj);
+            return d.reject();
+        }
     }
     //Handling of undo/redo events
     if (e.metaKey && e.keyCode !== 65 && e.keyCode !== 88 && e.keyCode !== 86 && e.keyCode !== 67) {
@@ -373,7 +379,7 @@ function makeEditable(contentId, obj) {
 }
 
 function addSuggestionsPopover(obj) {
-    var popoverString = "<div style = 'position : absolute' class = 'popoverContainer' id='" + obj.popoverContainerId + "'><a href=\"#\" title=\"\" data-toggle=\"popover\" id='" + obj.popoverId + "'data-content=\"\" data-placement=\"bottom\"></a></div>";
+    var popoverString = "<div style = 'position : absolute' class = 'popoverContainer' id='" + obj.popoverContainerId + "'><a href='#' title='' data-toggle='popover' id='" + obj.popoverId + "'data-content='' data-placement='bottom'></a></div>";
     $(obj.content()).after(popoverString);
 }
 
@@ -557,7 +563,6 @@ function makeListOfSuggestions(text) {
     var array = text.split(",");
     var list = "<div class='list-group'></div>";
     for (var i = 0; i < array.length; i++) {
-        console.log(array[i]);
         var b = $("<a href='#' class='list-group-item'></a>").wrapInner(array[i]);
         list = $(list).append(b);
     }

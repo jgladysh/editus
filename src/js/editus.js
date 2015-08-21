@@ -5,9 +5,6 @@ import {initStack} from './undo_redo';
 
 function Editus(id) {
     this.editorId = id;
-    this.content = function () {
-        return document.getElementById(id);
-    };
     this.startValue = id ? document.getElementById(id).innerHTML : undefined;
     this.EditCommand = undefined;
     this.stack = undefined;
@@ -24,16 +21,16 @@ function Editus(id) {
     this.$current = undefined;
     this.popoverContainerId = 'popoverContainer' + '_' + id;
     this.popoverId = 'popover' + '_' + id;
+    this.suggestionUrl = undefined;
+    this.content = function () {
+        return document.getElementById(id);
+    };
     this.popoverContainer = function () {
         return document.getElementById(this.popoverContainerId);
     };
     this.popov = function () {
         return document.getElementById(this.popoverId);
     };
-    this.suggestionUrl = 'http://localhost:3000/';
-
-    initStack(this);
-    makeEditable(this.editorId, this);
 
     // Add words to be highlighted
     this.setHighlightingWords = function (arr) {
@@ -41,6 +38,13 @@ function Editus(id) {
             this.keyWordsArray = arr;
         }
     };
+    //Setting of service url presume actual suggestions from server side
+    this.setSuggestionsService = function (url) {
+        this.suggestionUrl = url;
+    };
+
+    initStack(this);
+    makeEditable(this.editorId, this);
 
 }
 

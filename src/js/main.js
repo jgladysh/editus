@@ -22,11 +22,13 @@ function processKeyDown(e, obj) {
         destroyPopUp(obj);
     }
     //Showing of popup with suggestions at current cursor position
-    if (e.shiftKey && e.keyCode === 32) {
-        e.preventDefault();
-        var position = getCursorCoordinates();
-        initialisePopover(position.top + 25, position.left, obj);
-        return d.reject();
+    if (e.ctrlKey && e.keyCode === 32) {
+        if (obj.suggestionUrl) {
+            e.preventDefault();
+            var position = getCursorCoordinates();
+            initialisePopover(position.top + 25, position.left, obj);
+            return d.reject();
+        }
     }
     //Handling of undo/redo events
     if (e.metaKey && e.keyCode !== 65 && e.keyCode !== 88 && e.keyCode !== 86 && e.keyCode !== 67) {
@@ -103,11 +105,11 @@ function makeEditable(contentId, obj) {
 }
 
 function addSuggestionsPopover(obj) {
-    var popoverString = "<div style = \'position : absolute\' class = 'popoverContainer' id='" +
+    var popoverString = "<div style = 'position : absolute' class = 'popoverContainer' id='" +
         obj.popoverContainerId +
-        "'><a href=\"#\" title=\"\" data-toggle=\"popover\" id='" +
+        "'><a href='#' title='' data-toggle='popover' id='" +
         obj.popoverId +
-        "'data-content=\"\" data-placement=\"bottom\"></a></div>";
+        "'data-content='' data-placement='bottom'></a></div>";
     $(obj.content()).after(popoverString);
 }
 
