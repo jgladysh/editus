@@ -10,7 +10,6 @@ import 'jquery';
 import jQuery from 'jquery';
 import 'bootstrap';
 
-//var suggestions = $.parseHTML('<div class="list-group"><a href="#" class="list-group-item">Item 1</a><a href="#" class="list-group-item">Item 2</a> <a href="#" class="list-group-item">Item 3</a> <a href="#" class="list-group-item">Item 4</a> <a href="#" class="list-group-item">Item 5</a> </div>')[0];
 //Popover initialisation
 function initialisePopover(top, left, obj) {
 
@@ -121,8 +120,9 @@ function makeCorsRequest(obj) {
 
 //Fill, add events and show popover
 function showPopover(obj, text) {
+    var list = makeListOfSuggestions(text);
     var pop = obj.popov();
-    $(pop).popover({html: true, content: text});
+    $(pop).popover({html: true, content: list});
     $(pop).popover('show');
     obj.popUp = true;
 
@@ -141,5 +141,17 @@ function showPopover(obj, text) {
         checkHighlighted(e, obj);
         execute(0, e, obj);
     });
+}
+
+//separate and wrap every suggestion
+function makeListOfSuggestions(text) {
+    var array = text.split(",");
+    var list = "<div class='list-group'></div>";
+    for (var i = 0; i < array.length; i++) {
+        console.log(array[i]);
+        var b = $( "<a href='#' class='list-group-item'></a>" ).wrapInner(array[i]);
+        list = $(list).append(b);
+    }
+    return list;
 }
 export {initialisePopover, listScroll, destroyPopUp};
