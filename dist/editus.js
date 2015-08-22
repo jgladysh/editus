@@ -234,7 +234,7 @@ function checkHighlighted(e, obj) {
         if (nodeToCheck.className === "highlighted" || sel.baseNode.className === "highlighted") {
             var range = sel.getRangeAt(0),
                 char = getCharacterOffsetWithin(range, content),
-                highlighted = $(".highlighted");
+                highlighted = document.getElementById(obj.editorId).getElementsByClassName("highlighted");
             for (var i = 0; i < highlighted.length; i++) {
                 var text = $(highlighted[i]).text();
                 if (!new RegExp(obj.keyWordsArray.map(function (w) {
