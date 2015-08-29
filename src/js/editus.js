@@ -9,7 +9,6 @@ import {UndoRedo} from './undo_redo';
 
 function Editus(id) {
     this.Suggestion = new Suggestion();
-    this.Highlighting = new Highlighting();
     this.UndoRedo = new UndoRedo();
     this.editorId = id;
     this.executeOnInsert = false;
@@ -30,45 +29,12 @@ function Editus(id) {
     // Add words to be highlighted
     this.setHighlightingWords = function (arr) {
         if (arr && arr.length >= 0) {
-            this.keyWordsArray = arr;
+            this.Highlighting = new Highlighting(arr);
         }
     };
     //Setting of service url presume actual suggestions from server side
     this.setSuggestionsService = function (url) {
         this.suggestionUrl = url;
-    };
-
-    //Check every highlighted node for changes
-    this.checkHighlighted = function (e) {
-        if (this.keyWordsArray) {
-            var sel = window.getSelection(),
-                anchorNode = sel.anchorNode,
-                nextNode = anchorNode.nextElementSibling,
-                content = this.content(),
-                nodeToCheck = sel.baseNode.parentElement;
-            //Handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
-            if (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === 'SPAN')) {
-                $(nextNode).contents().unwrap();
-                content.normalize();
-            }
-            if (nodeToCheck.className === 'highlighted' || sel.baseNode.className === 'highlighted') {
-                var range = sel.getRangeAt(0),
-                    char = getCharacterOffsetWithin(range, content),
-                    highlighted = document.getElementById(this.editorId).getElementsByClassName("highlighted");
-                for (var i = 0; i < highlighted.length; i++) {
-                    var text = $(highlighted[i]).text();
-                    if (!(new RegExp(this.keyWordsArray.map(function (w) {
-                            return '^' + w + '$';
-                        }).join('|'), 'gi').test(text))) {
-                        $(highlighted[i]).contents().unwrap();
-                        content.normalize();
-                        if (e.keyCode !== 13) {
-                            setCaretCharIndex(content, char);
-                        }
-                    }
-                }
-            }
-        }
     };
 
     var ed = this;
@@ -77,13 +43,8 @@ function Editus(id) {
     this.content().processKeyDown = function (e) {
         var d = new $.Deferred();
         //Handling events at suggestion popover
-        if (ed.Suggestion.popUp && (e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 13)) {
-            e.preventDefault();
-            ed.Suggestion.listScroll(e, ed);
-            return d.reject();
-        }
-        else if (ed.Suggestion.popUp) {
-            ed.Suggestion.destroyPopUp(ed);
+        if (ed.Suggestion.popUp){
+            ed.Suggestion.triggerKeyDown(ed,e)
         }
         //Showing of popup with suggestions at current cursor position
         if (e.ctrlKey && e.keyCode === 32) {
@@ -120,8 +81,8 @@ function Editus(id) {
             ed.meta = false;
         }
         //Handling arrow buttons events
-        if (e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
-            ed.checkHighlighted(e);
+        if (ed.Highlighting && e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
+            ed.Highlighting.checkHighlighted(e, ed.content());
         }
         this.process();
     };
@@ -139,8 +100,9 @@ function Editus(id) {
             if (selection.type === "Range") {
                 return d.resolve();
             }
-
-            ed.Highlighting.checkEveryTag(ed.content(), ed);
+            if (ed.Highlighting) {
+                ed.Highlighting.checkEveryTag(ed.content());
+            }
             //Don't manually set caret in case of moving to new line
             if ((ed.meta && offset === 0 && selection.baseNode.nodeName === 'DIV') || (!ed.meta && offset === 0)) {
                 return d.promise();
@@ -198,6 +160,6 @@ var initEditus = function (id) {
     return new Editus(id);
 };
 
-//window.initEditus = initEditus;
+window.initEditus = initEditus;
 
 export {initEditus};

@@ -92,7 +92,7 @@ export function Suggestion() {
             sg.destroyPopUp(obj);
             sg.popUp = false;
             insertNodeAtCursor(document.createTextNode(sg.chosen), obj);
-            obj.checkHighlighted(e);
+            //obj.Highlighting.checkHighlighted(e);
             //execute(0, e, obj);
         });
     }
@@ -117,10 +117,21 @@ export function Suggestion() {
     this.initialisePopover = function (top, left, obj) {
 
         var popoverContainer = obj.popoverContainer();
+        $(popoverContainer).on('keydown',function(e){e.preventDefault();alert('ololo')});
         popoverContainer.style.top = top + 'px';
         popoverContainer.style.left = left + 'px';
 
         makeCorsRequest(obj);
+    };
+
+    this.triggerKeyDown = function(ed, e){
+        if (e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 13) {
+            e.preventDefault();
+            this.listScroll(e, ed);
+        }
+        else {
+            this.destroyPopUp(ed);
+        }
     };
 
 //Handling Up/Down/Enter buttons in popover

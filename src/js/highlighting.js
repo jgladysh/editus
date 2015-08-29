@@ -4,7 +4,8 @@
 "use strict";
 
 import 'jquery';
-export function Highlighting() {
+import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
+export function Highlighting(keyWordsArray) {
 
 //Find occurrences of word in text, and return array of indexes of each matched word inside text
     function getMatches(word, text) {
@@ -39,29 +40,58 @@ export function Highlighting() {
     }
 
 //Wrap every range element from ranges array with 'highlighted' span tag
-    function wrapNodes(ranges, obj) {
+    function wrapNodes(ranges) {
         for (var i = 0; i < ranges.length; i++) {
             var highlightTag = document.createElement('span');
             highlightTag.className = 'highlighted';
-            $(highlightTag).data(obj.editorId, ranges[i].toString());
             ranges[i].surroundContents(highlightTag);
         }
     }
 
     //Recursively check every element in contentEditable node
-    this.checkEveryTag = function (node, obj) {
-        if (obj.keyWordsArray) {
+    this.checkEveryTag = function (node) {
+        if (keyWordsArray) {
             if (node.childNodes.length > 0) {
                 for (var i = 0; i < node.childNodes.length; i++) {
                     if (node.childNodes[i].data && node.childNodes[i].data !== '' || node.childNodes[i].nodeName === 'DIV') {
-                        this.checkEveryTag(node.childNodes[i], obj);
+                        this.checkEveryTag(node.childNodes[i]);
                     }
                 }
             }
             else {
-                var ranges = makeRangesFromMatches(obj.keyWordsArray, node);
-                wrapNodes(ranges, obj);
+                var ranges = makeRangesFromMatches(keyWordsArray, node);
+                wrapNodes(ranges);
             }
         }
+    };
+
+    //Check every highlighted node for changes
+    this.checkHighlighted = function (e, content) {
+            var sel = window.getSelection(),
+                anchorNode = sel.anchorNode,
+                nextNode = anchorNode.nextElementSibling,
+                nodeToCheck = sel.baseNode.parentElement;
+            //Handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
+            if (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === 'SPAN')) {
+                $(nextNode).contents().unwrap();
+                content.normalize();
+            }
+            if (nodeToCheck.className === 'highlighted' || sel.baseNode.className === 'highlighted') {
+                var range = sel.getRangeAt(0),
+                    char = getCharacterOffsetWithin(range, content),
+                    highlighted = content.getElementsByClassName("highlighted");
+                for (var i = 0; i < highlighted.length; i++) {
+                    var text = $(highlighted[i]).text();
+                    if (!(new RegExp(keyWordsArray.map(function (w) {
+                            return '^' + w + '$';
+                        }).join('|'), 'gi').test(text))) {
+                        $(highlighted[i]).contents().unwrap();
+                        content.normalize();
+                        if (e.keyCode !== 13) {
+                            setCaretCharIndex(content, char);
+                        }
+                    }
+                }
+            }
     };
 }
