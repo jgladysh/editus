@@ -9,28 +9,27 @@ import 'jquery';
 import jQuery from 'jquery';
 import 'bootstrap';
 
-export function Suggestion() {
+export function Suggestion(url, popoverId, popoverContainerId, content) {
     this.popUp = false;
     this.chosen = undefined;
     this.$current = undefined;
     var sg = this;
+
 //Insert node at current cursor position
-    function insertNodeAtCursor(node, obj) {
-        var content = obj.content();
+    function insertNodeAtCursor(node, cont) {
         var range = window.getSelection().getRangeAt(0);
-        var char = getCharacterOffsetWithin(range, content);
+        var char = getCharacterOffsetWithin(range, cont);
         range.insertNode(node);
-        content.normalize();
-        setCaretCharIndex(content, char + node.length);
-        obj.executeOnInsert = true;
+        cont.normalize();
+        setCaretCharIndex(cont, char + node.length);
     }
 
 
 //Pick and form data for request
-    function makeJsonForSuggestions(obj) {
+    function makeJsonForSuggestions(cont) {
         return JSON.stringify({
-            text: obj.content().innerHTML,
-            cursorPosition: getCharacterOffsetWithin(window.getSelection().getRangeAt(0), obj.content())
+            text: cont.innerHTML,
+            cursorPosition: getCharacterOffsetWithin(window.getSelection().getRangeAt(0), cont)
         });
     }
 
@@ -49,10 +48,10 @@ export function Suggestion() {
     }
 
 // Make the actual CORS request.
-    function makeCorsRequest(obj) {
+    function makeCorsRequest(cont) {
 
-        var data = makeJsonForSuggestions(obj);
-        var xhr = createCORSRequest('POST', obj.suggestionUrl, data);
+        var data = makeJsonForSuggestions(cont);
+        var xhr = createCORSRequest('POST', url, data);
         if (!xhr) {
             throw('CORS not supported');
         }
@@ -60,9 +59,9 @@ export function Suggestion() {
         xhr.onload = function () {
 
             var text = xhr.responseText;
-            console.log('Response from CORS request to ' + obj.suggestionUrl + ': ' + text);
+            console.log('Response from CORS request to ' + url + ': ' + text);
 
-            showPopover(obj, text);
+            showPopover(cont, text);
         };
 
         xhr.onerror = function () {
@@ -73,27 +72,25 @@ export function Suggestion() {
     }
 
 //Fill, add events and show popover
-    function showPopover(obj, text) {
+    function showPopover(cont, text) {
         var list = makeListOfSuggestions(text);
-        var pop = obj.popov();
+        var pop = document.getElementById(popoverId);
         $(pop).popover({html: true, content: list});
         $(pop).popover('show');
         sg.popUp = true;
 
         //Destroy popover when user takes away mouse from it
         $('.popover').mouseleave(function () {
-            sg.destroyPopUp(obj);
+            sg.destroyPopUp();
             sg.popUp = false;
         });
         //Triggering of choosing popup item with mouse
         $('.popover').on('mousedown', 'a', function (e) {
             e.preventDefault();
             sg.chosen = e.currentTarget.innerText;
-            sg.destroyPopUp(obj);
+            sg.destroyPopUp();
             sg.popUp = false;
-            insertNodeAtCursor(document.createTextNode(sg.chosen), obj);
-            //obj.Highlighting.checkHighlighted(e);
-            //execute(0, e, obj);
+            insertNodeAtCursor(document.createTextNode(sg.chosen), cont);
         });
     }
 
@@ -109,33 +106,31 @@ export function Suggestion() {
     }
 
     //Destroy popover
-    this.destroyPopUp = function (obj) {
-        $(obj.popov()).popover('destroy');
+    this.destroyPopUp = function () {
+        $(document.getElementById(popoverId)).popover('destroy');
     };
 
 //Popover initialisation
-    this.initialisePopover = function (top, left, obj) {
+    this.initialisePopover = function (top, left, cont) {
+        this.popoverContainer = document.getElementById(popoverContainerId);
+        this.popoverContainer.style.top = top + 'px';
+        this.popoverContainer.style.left = left + 'px';
 
-        var popoverContainer = obj.popoverContainer();
-        $(popoverContainer).on('keydown',function(e){e.preventDefault();alert('ololo')});
-        popoverContainer.style.top = top + 'px';
-        popoverContainer.style.left = left + 'px';
-
-        makeCorsRequest(obj);
+        makeCorsRequest(cont);
     };
 
-    this.triggerKeyDown = function(ed, e){
+    this.triggerKeyDown = function (cont, e) {
         if (e.keyCode === 38 || e.keyCode === 40 || e.keyCode === 13) {
             e.preventDefault();
-            this.listScroll(e, ed);
+            this.listScroll(e, cont);
         }
         else {
-            this.destroyPopUp(ed);
+            this.destroyPopUp();
         }
     };
 
 //Handling Up/Down/Enter buttons in popover
-    this.listScroll = function (e, obj) {
+    this.listScroll = function (e, cont) {
         var key = e.keyCode,
             $listItems = $('.list-group-item'),
             $selected = $listItems.filter('.selected');
@@ -144,9 +139,9 @@ export function Suggestion() {
         //Handling Enter button
         if (key === 13 && this.$current) {
             this.chosen = $(this.$current[0]).html();
-            this.destroyPopUp(obj);
+            this.destroyPopUp();
             this.popUp = false;
-            insertNodeAtCursor(document.createTextNode(this.chosen), obj);
+            insertNodeAtCursor(document.createTextNode(this.chosen), cont);
             return;
         }
         //Handling Down button
@@ -169,4 +164,13 @@ export function Suggestion() {
         }
         this.$current.addClass('selected');
     };
+
+    (function addSuggestionsPopover(content) {
+        var popoverString = "<div style = 'position : absolute' class = 'popoverContainer' id='" +
+            popoverContainerId +
+            "'><a href='#' title='' data-toggle='popover' id='" +
+            popoverId +
+            "'data-content='' data-placement='bottom'></a></div>";
+        $(content).after(popoverString);
+    })(content);
 }

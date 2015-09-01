@@ -8,51 +8,60 @@ import {UndoRedo} from './undo_redo';
 
 
 function Editus(id) {
-    this.Suggestion = new Suggestion();
     this.UndoRedo = new UndoRedo();
     this.editorId = id;
     this.executeOnInsert = false;
     this.meta = false;
-    this.popoverContainerId = 'popoverContainer' + '_' + id;
-    this.popoverId = 'popover' + '_' + id;
-    this.suggestionUrl = undefined;
     this.content = function () {
         return document.getElementById(id);
     };
-    this.popoverContainer = function () {
-        return document.getElementById(this.popoverContainerId);
-    };
-    this.popov = function () {
-        return document.getElementById(this.popoverId);
-    };
+    this.popoverContainerId = undefined;
+    this.popoverId = undefined;
+    var ed = this;
 
     // Add words to be highlighted
     this.setHighlightingWords = function (arr) {
         if (arr && arr.length >= 0) {
             this.Highlighting = new Highlighting(arr);
+            if (this.Suggestion) {
+                addPopoverEvent()
+            }
         }
     };
+
     //Setting of service url presume actual suggestions from server side
     this.setSuggestionsService = function (url) {
-        this.suggestionUrl = url;
+        if (url) {
+            this.popoverContainerId = 'popoverContainer' + '_' + id;
+            this.popoverId = 'popover' + '_' + id;
+
+            this.Suggestion = new Suggestion(url, this.popoverId, this.popoverContainerId, this.content());
+            if (this.Highlighting) {
+                addPopoverEvent()
+            }
+        }
     };
 
-    var ed = this;
+    function addPopoverEvent() {
+        document.getElementById(ed.popoverContainerId).onmouseup = function (event) {
+            ed.Highlighting.checkHighlighted(event, ed.content());
+            ed.UndoRedo.execute(0, event, ed);
+        }
+    }
 
-    //Executing on key down event
+//Executing on key down event
     this.content().processKeyDown = function (e) {
         var d = new $.Deferred();
         //Handling events at suggestion popover
-        if (ed.Suggestion.popUp){
-            ed.Suggestion.triggerKeyDown(ed,e)
+        if (ed.Suggestion.popUp) {
+            ed.Suggestion.triggerKeyDown(ed.content(), e)
         }
         //Showing of popup with suggestions at current cursor position
         if (e.ctrlKey && e.keyCode === 32) {
-            if (ed.suggestionUrl) {
+            if (ed.Suggestion) {
                 e.preventDefault();
                 var position = getCursorCoordinates();
-                ed.Suggestion.initialisePopover(position.top + 25, position.left, ed);
-                return d.reject();
+                ed.Suggestion.initialisePopover(position.top + 25, position.left, ed.content());
             }
         }
         //Handling of undo/redo events
@@ -80,16 +89,18 @@ function Editus(id) {
         if (e.keyCode === 32 || e.keyCode === 13 || e.keyCode === 8 || ed.meta) {
             ed.meta = false;
         }
+
+        this.process(e);
+    };
+
+//Check text for words to highlight and set caret to current position
+    this.content().process = function (e) {
+        var d = new $.Deferred();
+
         //Handling arrow buttons events
         if (ed.Highlighting && e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
             ed.Highlighting.checkHighlighted(e, ed.content());
         }
-        this.process();
-    };
-
-//Check text for words to highlight and set caret to current position
-    this.content().process = function () {
-        var d = new $.Deferred();
 
         if (ed.content.firstChild !== null) {
             var selection = window.getSelection(),
@@ -121,19 +132,8 @@ function Editus(id) {
         if (this.content().nodeName !== 'DIV') {
             throw 'Editable element must be DIV';
         }
-
-        this.addSuggestionsPopover(this);
         this.addEvents();
 
-    };
-
-    this.addSuggestionsPopover = function () {
-        var popoverString = "<div style = 'position : absolute' class = 'popoverContainer' id='" +
-            this.popoverContainerId +
-            "'><a href='#' title='' data-toggle='popover' id='" +
-            this.popoverId +
-            "'data-content='' data-placement='bottom'></a></div>";
-        $(this.content()).after(popoverString);
     };
 
 //Add events to contentEditable node
@@ -145,8 +145,8 @@ function Editus(id) {
             this.processKeyDown(event).then(ed.UndoRedo.execute(250, event, ed), function () {
             });
         };
-        this.content().onmouseup = function () {
-            this.process().then(ed.UndoRedo.execute(0, event, ed), function () {
+        this.content().onmouseup = function (event) {
+            this.process(event).then(ed.UndoRedo.execute(0, event, ed), function () {
             });
         };
     };
