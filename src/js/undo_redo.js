@@ -22,10 +22,9 @@ export function UndoRedo() {
 
     var ur = this;
 //Configuring of stack commands for undo/redo events
-    this.initStack = function (obj) {
-        var content = obj.content();
+    this.initStack = function (content) {
         this.stack = new Undo.Stack();
-        this.startValue = document.getElementById(obj.editorId).innerHTML;
+        this.startValue = content.innerHTML;
 
         this.EditCommand = Undo.Command.extend({
             constructor: function (textarea, oldValue, newValue, undoPosition, redoPosition) {
@@ -66,12 +65,7 @@ export function UndoRedo() {
 
 //Executing at changes in editor with timeout and save changes to stack
 //On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
-    this.execute = function (timeout, e, obj) {
-        var content = obj.content();
-        //Don't catch ctrl/cmd+z, ctrl/cmd+y events
-        if (obj.meta) {
-            return;
-        }
+    this.execute = function (timeout, e, content) {
         //Don't set 250 ms timeout if it's first phrase in editor, or if it first change after undo event,
         //because we need to catch it exactly from beginning
         if (this.wasUndo || !content.hasChildNodes()) {
@@ -86,7 +80,7 @@ export function UndoRedo() {
                 undoPosition = ur.position,
                 redoPosition = getCharacterOffsetWithin(range, content);
             //Handle and don't save if nothing was changed or was 'new line' event
-            if (undoPosition === redoPosition || (!obj.executeOnInsert && e.keyCode === 13)) {
+            if (undoPosition === redoPosition || e.keyCode === 13) {
                 ur.wasUndo = false;
                 return;
             }
@@ -114,7 +108,6 @@ export function UndoRedo() {
             ur.startValue = newValue;
             ur.position = redoPosition;
             ur.wasUndo = false;
-            obj.executeOnInsert = false;
         }, timeout);
     };
 }

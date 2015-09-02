@@ -9,35 +9,34 @@ import {UndoRedo} from './undo_redo';
 
 function Editus(id) {
     this.UndoRedo = new UndoRedo();
-    this.editorId = id;
-    this.executeOnInsert = false;
     this.meta = false;
     this.content = function () {
         return document.getElementById(id);
     };
     this.popoverContainerId = undefined;
     this.popoverId = undefined;
+
     var ed = this;
 
     // Add words to be highlighted
-    this.setHighlightingWords = function (arr) {
+    Editus.prototype.setHighlightingWords = function (arr) {
         if (arr && arr.length >= 0) {
             this.Highlighting = new Highlighting(arr);
             if (this.Suggestion) {
-                addPopoverEvent()
+                addPopoverEvent();
             }
         }
     };
 
     //Setting of service url presume actual suggestions from server side
-    this.setSuggestionsService = function (url) {
+    Editus.prototype.setSuggestionsService = function (url) {
         if (url) {
-            this.popoverContainerId = 'popoverContainer' + '_' + id;
-            this.popoverId = 'popover' + '_' + id;
+            ed.popoverContainerId = 'popoverContainer' + '_' + id;
+            ed.popoverId = 'popover' + '_' + id;
 
-            this.Suggestion = new Suggestion(url, this.popoverId, this.popoverContainerId, this.content());
+            this.Suggestion = new Suggestion(url, ed.popoverId, ed.popoverContainerId, ed.content());
             if (this.Highlighting) {
-                addPopoverEvent()
+                addPopoverEvent();
             }
         }
     };
@@ -45,20 +44,20 @@ function Editus(id) {
     function addPopoverEvent() {
         document.getElementById(ed.popoverContainerId).onmouseup = function (event) {
             ed.Highlighting.checkHighlighted(event, ed.content());
-            ed.UndoRedo.execute(0, event, ed);
-        }
+            ed.UndoRedo.execute(0, event, ed.content());
+        };
     }
 
 //Executing on key down event
-    this.content().processKeyDown = function (e) {
+    function processKeyDown(e) {
         var d = new $.Deferred();
         //Handling events at suggestion popover
-        if (ed.Suggestion.popUp) {
-            ed.Suggestion.triggerKeyDown(ed.content(), e)
-        }
-        //Showing of popup with suggestions at current cursor position
-        if (e.ctrlKey && e.keyCode === 32) {
-            if (ed.Suggestion) {
+        if (ed.Suggestion) {
+            if (ed.Suggestion.popUp) {
+                ed.Suggestion.triggerKeyDown(ed.content(), e);
+            }
+            //Showing of popup with suggestions at current cursor position
+            if (e.ctrlKey && e.keyCode === 32) {
                 e.preventDefault();
                 var position = getCursorCoordinates();
                 ed.Suggestion.initialisePopover(position.top + 25, position.left, ed.content());
@@ -77,10 +76,10 @@ function Editus(id) {
             }
         }
         return d.promise();
-    };
+    }
 
 //Executing on key up event
-    this.content().processKeyUp = function (e) {
+    function processKeyUp(e) {
         //Return if text was selected
         if (window.getSelection().type === "Range") {
             return;
@@ -90,11 +89,11 @@ function Editus(id) {
             ed.meta = false;
         }
 
-        this.process(e);
-    };
+        process(e);
+    }
 
 //Check text for words to highlight and set caret to current position
-    this.content().process = function (e) {
+    function process(e) {
         var d = new $.Deferred();
 
         //Handling arrow buttons events
@@ -123,36 +122,37 @@ function Editus(id) {
             }
         }
         return d.promise();
-    };
+    }
 
-
-//Make editor from contentEditable node
-    this.makeEditable = function () {
-
-        if (this.content().nodeName !== 'DIV') {
-            throw 'Editable element must be DIV';
+    function executeStack(time) {
+        if (!ed.meta) {
+            ed.UndoRedo.execute(time, event, ed.content());
         }
-        this.addEvents();
-
-    };
+    }
 
 //Add events to contentEditable node
-    this.addEvents = function () {
-        this.content().onkeyup = function (event) {
-            this.processKeyUp(event);
+    function addEvents() {
+        ed.content().onkeyup = function (event) {
+            processKeyUp(event);
         };
-        this.content().onkeydown = function (event) {
-            this.processKeyDown(event).then(ed.UndoRedo.execute(250, event, ed), function () {
-            });
+        ed.content().onkeydown = function (event) {
+            processKeyDown(event).then(executeStack(250));
         };
-        this.content().onmouseup = function (event) {
-            this.process(event).then(ed.UndoRedo.execute(0, event, ed), function () {
-            });
+        ed.content().onmouseup = function (event) {
+            process(event).then(executeStack(0));
         };
-    };
+    }
 
-    this.UndoRedo.initStack(this);
-    this.makeEditable(this.editorId, this);
+    //Make editor from contentEditable node
+    (function makeEditable() {
+
+        if (ed.content().nodeName !== 'DIV') {
+            throw 'Editable element must be DIV';
+        }
+        ed.UndoRedo.initStack(ed.content());
+        addEvents();
+
+    })();
 
 }
 
