@@ -70,10 +70,15 @@ function Editus(id) {
 
             if (e.metaKey && e.keyCode === 90 && ed.UndoRedo.canUndo) {
                 ed.UndoRedo.stack.undo();
+                setCaretCharIndex(ed.content(), ed.UndoRedo.undoPos);
             }
             else if (e.metaKey && e.keyCode === 89 && ed.UndoRedo.canRedo) {
                 ed.UndoRedo.stack.redo();
+                setCaretCharIndex(ed.content(), ed.UndoRedo.redoPos);
             }
+        }
+        else {
+            ed.meta = false;
         }
         return d.promise();
     }
@@ -84,10 +89,6 @@ function Editus(id) {
         if (window.getSelection().type === "Range") {
             return;
         }
-        //Handling space, 'enter' and undo/redo events
-        if (e.keyCode === 32 || e.keyCode === 13 || e.keyCode === 8 || ed.meta) {
-            ed.meta = false;
-        }
 
         process(e);
     }
@@ -95,6 +96,10 @@ function Editus(id) {
 //Check text for words to highlight and set caret to current position
     function process(e) {
         var d = new $.Deferred();
+        var selection = window.getSelection(),
+            range = selection.getRangeAt(0),
+            offset = selection.baseOffset,
+            char = getCharacterOffsetWithin(range, ed.content());
 
         //Handling arrow buttons events
         if (ed.Highlighting && e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
@@ -102,16 +107,14 @@ function Editus(id) {
         }
 
         if (ed.content.firstChild !== null) {
-            var selection = window.getSelection(),
-                range = selection.getRangeAt(0),
-                char = getCharacterOffsetWithin(range, ed.content()),
-                offset = selection.baseOffset;
             //Return if text was selected
             if (selection.type === "Range") {
                 return d.resolve();
             }
             if (ed.Highlighting) {
                 ed.Highlighting.checkEveryTag(ed.content());
+                selection.removeAllRanges();
+                selection.addRange(range);
             }
             //Don't manually set caret in case of moving to new line
             if ((ed.meta && offset === 0 && selection.baseNode.nodeName === 'DIV') || (!ed.meta && offset === 0)) {
@@ -139,6 +142,7 @@ function Editus(id) {
             processKeyDown(event).then(executeStack(250));
         };
         ed.content().onmouseup = function (event) {
+            ed.meta = false;
             process(event).then(executeStack(0));
         };
     }

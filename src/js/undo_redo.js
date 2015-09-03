@@ -19,6 +19,8 @@ export function UndoRedo() {
     this.wasUndo = false;
     this.position = 0;
     this.cursorChange = false;
+    this.undoPos = 0;
+    this.redoPos = 0;
 
     var ur = this;
 //Configuring of stack commands for undo/redo events
@@ -40,14 +42,16 @@ export function UndoRedo() {
             undo: function () {
                 this.textarea.innerHTML = this.oldValue;
                 ur.startValue = content.innerHTML;
-                setCaretCharIndex(content, this.undoPosition);
+                //setCaretCharIndex(content, this.undoPosition);
+                ur.undoPos = this.undoPosition;
                 ur.wasUndo = true;
             },
 
             redo: function () {
                 this.textarea.innerHTML = this.newValue;
                 ur.startValue = content.innerHTML;
-                setCaretCharIndex(content, this.redoPosition);
+                ur.redoPos = this.redoPosition;
+                //setCaretCharIndex(content, this.redoPosition);
             }
         });
 
