@@ -17,6 +17,7 @@ function Editus(id) {
     this.popoverId = undefined;
 
     var ed = this;
+    var range;
 
     // Add words to be highlighted
     Editus.prototype.setHighlightingWords = function (arr) {
@@ -51,6 +52,7 @@ function Editus(id) {
 //Executing on key down event
     function processKeyDown(e) {
         var d = new $.Deferred();
+        var selection = window.getSelection();
         //Handling events at suggestion popover
         if (ed.Suggestion) {
             if (ed.Suggestion.popUp) {
@@ -70,11 +72,23 @@ function Editus(id) {
 
             if (e.metaKey && e.keyCode === 90 && ed.UndoRedo.canUndo) {
                 ed.UndoRedo.stack.undo();
-                setCaretCharIndex(ed.content(), ed.UndoRedo.undoPos);
+                if (ed.UndoRedo.canUndo) {
+                    //range = document.createRange();
+                    //range.setStart(ed.content().childNodes[ed.UndoRedo.undoPos.node], ed.UndoRedo.undoPos.index);
+                    //range.collapse(true);
+                    //selection.removeAllRanges();
+                    //selection.addRange(range);
+                    //document.getElementById(id).focus();
+                }
             }
             else if (e.metaKey && e.keyCode === 89 && ed.UndoRedo.canRedo) {
                 ed.UndoRedo.stack.redo();
-                setCaretCharIndex(ed.content(), ed.UndoRedo.redoPos);
+                //range = document.createRange();
+                //range.setStart(ed.content().childNodes[ed.UndoRedo.redoPos.node], ed.UndoRedo.redoPos.index);
+                //range.collapse(true);
+                //selection.removeAllRanges();
+                //selection.addRange(range);
+                //document.getElementById(id).focus();
             }
         }
         else {
@@ -89,7 +103,6 @@ function Editus(id) {
         if (window.getSelection().type === "Range") {
             return;
         }
-
         process(e);
     }
 
@@ -117,7 +130,7 @@ function Editus(id) {
                 selection.addRange(range);
             }
             //Don't manually set caret in case of moving to new line
-            if ((ed.meta && offset === 0 && selection.baseNode.nodeName === 'DIV') || (!ed.meta && offset === 0)) {
+            if (ed.meta || (!ed.meta && offset === 0)) {
                 return d.promise();
             }
             else {
