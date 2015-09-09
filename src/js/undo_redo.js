@@ -4,7 +4,6 @@
 
 "use strict";
 
-import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 import 'jquery';
 import 'undo';
 
@@ -19,14 +18,25 @@ export function UndoRedo() {
     this.wasUndo = false;
     this.position = 0;
     this.cursorChange = false;
-    this.undoPos = {node: 0, index: 0};
-    this.redoPos = 0;
 
     var ur = this;
 //Configuring of stack commands for undo/redo events
     this.initStack = function (content) {
         this.stack = new Undo.Stack();
         this.startValue = content.innerHTML;
+
+        function setCaretRange(position) {
+            var range = document.createRange();
+            var selection = window.getSelection();
+            var node = content.childNodes[position.nodeIndex];
+            if (!(node instanceof Node)) {
+                return;
+            }
+            range.setStart(node, position.offset);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
 
         this.EditCommand = Undo.Command.extend({
             constructor: function (textarea, oldValue, newValue, undoPosition, redoPosition) {
@@ -42,30 +52,16 @@ export function UndoRedo() {
             undo: function () {
                 this.textarea.innerHTML = this.oldValue;
                 ur.startValue = content.innerHTML;
-                ur.undoPos = this.undoPosition;
                 ur.wasUndo = true;
-                var range = document.createRange();
-                var selection = window.getSelection();
-                var node = content.childNodes[this.undoPosition.nodeIndex];
-                range.setStart(node, this.undoPosition.offset);
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-                //document.getElementById(id).focus();
+                setCaretRange(this.undoPosition);
             },
 
             redo: function () {
                 this.textarea.innerHTML = this.newValue;
                 ur.startValue = content.innerHTML;
-                ur.redoPos = this.redoPosition;
-                var range = document.createRange();
-                var selection = window.getSelection();
-                var node = content.childNodes[this.redoPosition.nodeIndex];
-                range.setStart(node, this.redoPosition.offset);
-                range.collapse(true);
-                selection.removeAllRanges();
-                selection.addRange(range);
-                //document.getElementById(id).focus();
+                if (this.redoPosition.nodeIndex !== undefined) {
+                    setCaretRange(this.redoPosition);
+                }
             }
         });
 
@@ -132,17 +128,18 @@ export function UndoRedo() {
         }, timeout);
     };
 
-    ////Find index of node in editor
+    //Find index of node in editor
     function findNodeIndex(id, node) {
         if (node.id === id) {
-            return 0
+            return 0;
         }
-        while (node.parentNode.id !== id) {
-            node = node.parentNode;
+        var parent;
+        while (node.parentNode.nodeName !== 'DIV') {
+            node = parent = node.parentNode;
         }
         var i = 0;
         while (node = node.previousSibling) {
-            ++i
+            ++i;
         }
         return i;
     }

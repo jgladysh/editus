@@ -17,7 +17,6 @@ function Editus(id) {
     this.popoverId = undefined;
 
     var ed = this;
-    var range;
 
     // Add words to be highlighted
     Editus.prototype.setHighlightingWords = function (arr) {
@@ -52,7 +51,7 @@ function Editus(id) {
 //Executing on key down event
     function processKeyDown(e) {
         var d = new $.Deferred();
-        var selection = window.getSelection();
+
         //Handling events at suggestion popover
         if (ed.Suggestion) {
             if (ed.Suggestion.popUp) {
@@ -72,23 +71,9 @@ function Editus(id) {
 
             if (e.metaKey && e.keyCode === 90 && ed.UndoRedo.canUndo) {
                 ed.UndoRedo.stack.undo();
-                if (ed.UndoRedo.canUndo) {
-                    //range = document.createRange();
-                    //range.setStart(ed.content().childNodes[ed.UndoRedo.undoPos.node], ed.UndoRedo.undoPos.index);
-                    //range.collapse(true);
-                    //selection.removeAllRanges();
-                    //selection.addRange(range);
-                    //document.getElementById(id).focus();
-                }
             }
             else if (e.metaKey && e.keyCode === 89 && ed.UndoRedo.canRedo) {
                 ed.UndoRedo.stack.redo();
-                //range = document.createRange();
-                //range.setStart(ed.content().childNodes[ed.UndoRedo.redoPos.node], ed.UndoRedo.redoPos.index);
-                //range.collapse(true);
-                //selection.removeAllRanges();
-                //selection.addRange(range);
-                //document.getElementById(id).focus();
             }
         }
         else {
