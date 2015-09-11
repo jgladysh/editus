@@ -29,13 +29,14 @@ export function UndoRedo() {
             var range = document.createRange();
             var selection = window.getSelection();
             var parent = content;
-            if(position.parentIndex !== undefined){
+            if (position.parentIndex !== undefined) {
                 parent = content.childNodes[position.parentIndex]
             }
             var node = parent.childNodes[position.nodeIndex];
             if (!(node instanceof Node)) {
                 return;
             }
+            if (node.className == "highlighted"){node = node.childNodes[0]}
             range.setStart(node, position.offset);
             range.collapse(true);
             selection.removeAllRanges();
@@ -96,7 +97,7 @@ export function UndoRedo() {
                 doNotExecute = false,
                 newValue = content.innerHTML,
                 undoPosition = ur.position,
-                indexes = findNodeIndex(content.id, range.startContainer, content),
+                indexes = findNodeIndex(range.startContainer, content),
                 redoPosition = {
                     nodeIndex: indexes.index,
                     offset: range.startOffset,
@@ -135,20 +136,19 @@ export function UndoRedo() {
     };
 
     //Find index of node in editor
-    function findNodeIndex(id, node, content) {
-        if (node.id === id) {
+    function findNodeIndex(node, content) {
+        if (node.id === content.id) {
             return 0;
         }
-
-        var parentIndex;
         while (node.nodeName !== 'DIV' && node.parentNode.nodeName !== 'DIV') {
             node = node.parentNode;
         }
-        var parent = node.parentNode;
+        var parentIndex,
+            parent = node.parentNode,
+            index = getIndex(node);
         if (parent !== content) {
             parentIndex = getIndex(parent);
         }
-        var index = getIndex(node);
         return {
             index: index,
             parentIndex: parentIndex
@@ -158,7 +158,9 @@ export function UndoRedo() {
     function getIndex(node) {
         var i = 0;
         while (node = node.previousSibling) {
-            if(node.data == ''){return i;}
+            if (node.data == '') {
+                return i;
+            }
             ++i;
         }
         return i;
