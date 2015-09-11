@@ -20,23 +20,31 @@ export function UndoRedo() {
     this.cursorChange = false;
 
     var ur = this;
-//Configuring of stack commands for undo/redo events
+
+    //Configuring of stack commands for undo/redo events
     this.initStack = function (content) {
         this.stack = new Undo.Stack();
         this.startValue = content.innerHTML;
 
+        //Set caret to required position
         function setCaretRange(position) {
-            var range = document.createRange();
-            var selection = window.getSelection();
-            var parent = content;
-            if (position.parentIndex !== undefined) {
-                parent = content.childNodes[position.parentIndex]
+            var range = document.createRange(),
+                selection = window.getSelection(),
+                parent = content;
+            //Check for new line div nodes
+            if (position.parentIndex > 0) {
+                parent = content.childNodes[position.parentIndex];
             }
+
             var node = parent.childNodes[position.nodeIndex];
+
             if (!(node instanceof Node)) {
                 return;
             }
-            if (node.className == "highlighted"){node = node.childNodes[0]}
+            //Needed to set range to the text node
+            if (node.className === "highlighted") {
+                node = node.childNodes[0];
+            }
             range.setStart(node, position.offset);
             range.collapse(true);
             selection.removeAllRanges();
@@ -82,8 +90,8 @@ export function UndoRedo() {
         };
     };
 
-//Executing at changes in editor with timeout and save changes to stack
-//On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
+    //Executing at changes in editor with timeout and save changes to stack
+    //On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
     this.execute = function (timeout, e, content) {
         //Don't set 250 ms timeout if it's first phrase in editor, or if it first change after undo event,
         //because we need to catch it exactly from beginning
@@ -94,7 +102,6 @@ export function UndoRedo() {
 
         this.timer = setTimeout(function () {
             var range = window.getSelection().getRangeAt(0),
-                doNotExecute = false,
                 newValue = content.innerHTML,
                 undoPosition = ur.position,
                 indexes = findNodeIndex(range.startContainer, content),
@@ -112,21 +119,8 @@ export function UndoRedo() {
             if (ur.wasUndo) {
                 undoPosition = ur.stack.stackPosition >= 0 ? ur.stack.commands[ur.stack.stackPosition].redoPosition : ur.stack.commands[0].redoPosition;
             }
-            //Catch mouse clicking and arrow keys events
-            else if (undoPosition !== redoPosition && newValue === ur.startValue) {
-                //Save only last one from series
-                if (ur.cursorChange) {
-                    ur.stack.commands[ur.stack.commands.length - 1].redoPosition = redoPosition;
-                    doNotExecute = true;
-                }
-                else {
-                    ur.cursorChange = true;
-                }
-            }
-            else {
-                ur.cursorChange = false;
-            }
-            if (!doNotExecute) {
+
+            if (!catchEffectlessClick(undoPosition, redoPosition, newValue)) {
                 ur.stack.execute(new ur.EditCommand(content, ur.startValue, newValue, undoPosition, redoPosition));
             }
             ur.startValue = newValue;
@@ -134,6 +128,24 @@ export function UndoRedo() {
             ur.wasUndo = false;
         }, timeout);
     };
+
+    //Catch mouse clicking and arrow keys events for doesn't saving all series of clicks, that doesn't change content.
+    // Return true if was more than one click in course
+    function catchEffectlessClick(undoPosition, redoPosition, newValue) {
+        var changed = false;
+        if (undoPosition !== redoPosition && newValue === ur.startValue) {
+            //Save only last one from series
+            if (ur.cursorChange) {
+                ur.stack.commands[ur.stack.commands.length - 1].redoPosition = redoPosition;
+                changed = true;
+            }
+            ur.cursorChange = true;
+        }
+        else {
+            ur.cursorChange = false;
+        }
+        return changed;
+    }
 
     //Find index of node in editor
     function findNodeIndex(node, content) {
@@ -143,22 +155,26 @@ export function UndoRedo() {
         while (node.nodeName !== 'DIV' && node.parentNode.nodeName !== 'DIV') {
             node = node.parentNode;
         }
-        var parentIndex,
-            parent = node.parentNode,
-            index = getIndex(node);
-        if (parent !== content) {
-            parentIndex = getIndex(parent);
-        }
         return {
-            index: index,
-            parentIndex: parentIndex
+            index: getIndex(node),
+            parentIndex: findParentIndex(node, content)
+        };
+    }
+    //Return index of line node in content.
+    function findParentIndex(node, content) {
+        var lineIndex = 0,
+            parent = node.parentNode;
+        if (parent !== content) {
+            lineIndex = getIndex(parent);
         }
+        return lineIndex;
     }
 
+    //Return index of node inside it's parent
     function getIndex(node) {
         var i = 0;
         while (node = node.previousSibling) {
-            if (node.data == '') {
+            if (node.data === '') {
                 return i;
             }
             ++i;
