@@ -19,25 +19,30 @@ function Editus(id) {
     var ed = this;
 
     // Add words to be highlighted
-    Editus.prototype.setHighlightingWords = function (arr) {
-        if (arr && arr.length >= 0) {
-            this.Highlighting = new Highlighting(arr);
-            if (this.Suggestion) {
-                addPopoverEvent();
-            }
+    Editus.prototype.setHighlightingWords = function (arr, className) {
+        if (!arr || arr.constructor !== Array) {
+            throw 'Array of highlighted words should be provided'
+        }
+        if (!className || className.constructor !== String) {
+            throw 'Class name for highlighted words in String format should be provided'
+        }
+        this.Highlighting = new Highlighting(arr, className);
+        if (this.Suggestion) {
+            addPopoverEvent();
         }
     };
 
     //Setting of service url presume actual suggestions from server side
     Editus.prototype.setSuggestionsService = function (url) {
-        if (url) {
-            ed.popoverContainerId = 'popoverContainer' + '_' + id;
-            ed.popoverId = 'popover' + '_' + id;
+        if (!url) {
+            throw 'url to backend suggestion service should be provided'
+        }
+        ed.popoverContainerId = 'popoverContainer' + '_' + id;
+        ed.popoverId = 'popover' + '_' + id;
 
-            this.Suggestion = new Suggestion(url, ed.popoverId, ed.popoverContainerId, ed.content());
-            if (this.Highlighting) {
-                addPopoverEvent();
-            }
+        this.Suggestion = new Suggestion(url, ed.popoverId, ed.popoverContainerId, ed.content());
+        if (this.Highlighting) {
+            addPopoverEvent();
         }
     };
 

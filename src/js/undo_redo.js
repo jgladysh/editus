@@ -42,7 +42,7 @@ export function UndoRedo() {
                 return;
             }
             //Needed to set range to the text node
-            if (node.className === "highlighted") {
+            if (node.nodeName === "SPAN") {
                 node = node.childNodes[0];
             }
             range.setStart(node, position.offset);

@@ -5,7 +5,7 @@
 
 import 'jquery';
 import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
-export function Highlighting(keyWordsArray) {
+export function Highlighting(keyWordsArray, className) {
     var hl = this;
 
 //Find occurrences of word in text, and return array of indexes of each matched word inside text
@@ -44,7 +44,7 @@ export function Highlighting(keyWordsArray) {
     function wrapNodes(ranges) {
         for (var i = 0; i < ranges.length; i++) {
             var highlightTag = document.createElement('span');
-            highlightTag.className = 'highlighted';
+            highlightTag.className = className;
             ranges[i].surroundContents(highlightTag);
         }
     }
@@ -77,10 +77,10 @@ export function Highlighting(keyWordsArray) {
                 $(nextNode).contents().unwrap();
                 content.normalize();
             }
-            if (nodeToCheck.className === 'highlighted' || sel.baseNode.className === 'highlighted') {
+            if (nodeToCheck.className === className || sel.baseNode.className === className) {
                 var range = sel.getRangeAt(0),
                     char = getCharacterOffsetWithin(range, content),
-                    highlighted = content.getElementsByClassName("highlighted");
+                    highlighted = content.getElementsByClassName(className);
                 for (var i = 0; i < highlighted.length; i++) {
                     var text = $(highlighted[i]).text();
                     if (!(new RegExp(keyWordsArray.map(function (w) {
