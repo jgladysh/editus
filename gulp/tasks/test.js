@@ -6,7 +6,7 @@ var Server = require('karma').Server;
  */
 gulp.task('test', function (done) {
     new Server({
-        configFile: '/Users/julia/projects/SQL-editor/karma.config.js',
+        configFile: __dirname + '/../../karma.config.js',
         singleRun: true
     }, done).start();
 });
