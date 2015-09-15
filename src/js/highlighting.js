@@ -6,9 +6,10 @@
 import 'jquery';
 import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 export function Highlighting(keyWordsArray) {
+    var hl = this;
 
 //Find occurrences of word in text, and return array of indexes of each matched word inside text
-    function getMatches(word, text) {
+    this.getMatches = function(word, text) {
         var regular = new RegExp("\\b" + word + "\\b((?!\\W(?=\\w))|(?=\\s))", "gi"),
             array,
             result = [];
@@ -16,7 +17,7 @@ export function Highlighting(keyWordsArray) {
             result.push(array.index);
         }
         return result;
-    }
+    };
 
 //Make range from each matched word, return array of created ranges
     function makeRangesFromMatches(arr, node) {
@@ -24,7 +25,7 @@ export function Highlighting(keyWordsArray) {
 
         for (var j = 0; j < arr.length; j++) {
             var word = arr[j],
-                matches = getMatches(word, node.nodeValue);
+                matches = hl.getMatches(word, node.nodeValue);
             if (matches.length > 0) {
                 var matchArray = [];
                 for (var l = 0; l < matches.length; l++) {
