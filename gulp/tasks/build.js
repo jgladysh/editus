@@ -1,6 +1,6 @@
 var gulp = require('gulp');
 
-gulp.task('build', ['clean', 'lint'], function() {
+gulp.task('build', ['clean', 'lint', 'bower'], function() {
     gulp.start('bundle');
 
 });
