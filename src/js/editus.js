@@ -48,7 +48,7 @@ function Editus(id) {
 
     function addPopoverEvent() {
         document.getElementById(ed.popoverContainerId).onmouseup = function (event) {
-            ed.Highlighting.checkHighlighted(event, ed.content());
+            ed.Highlighting.checkHighlighted(ed.content());
             ed.UndoRedo.execute(0, event, ed.content());
         };
     }
@@ -106,7 +106,7 @@ function Editus(id) {
 
         //Handling arrow buttons events
         if (ed.Highlighting && e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
-            ed.Highlighting.checkHighlighted(e, ed.content());
+            ed.Highlighting.checkHighlighted(ed.content(), selection);
         }
 
         if (ed.content.firstChild !== null) {
@@ -115,7 +115,7 @@ function Editus(id) {
                 return d.resolve();
             }
             if (ed.Highlighting) {
-                ed.Highlighting.checkEveryTag(ed.content());
+                ed.Highlighting.checkEveryTag(ed.content(), selection);
                 selection.removeAllRanges();
                 selection.addRange(range);
             }

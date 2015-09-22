@@ -4,12 +4,12 @@
 "use strict";
 
 import 'jquery';
-import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
+
 export function Highlighting(keyWordsArray, className) {
     var hl = this;
 
-//Find occurrences of word in text, and return array of indexes of each matched word inside text
-    this.getMatches = function(word, text) {
+    //Find occurrences of word in text, and return array of indexes of each matched word inside text
+    this.getMatches = function (word, text) {
         var regular = new RegExp("\\b" + word + "\\b((?!\\W(?=\\w))|(?=\\s))", "gi"),
             array,
             result = [];
@@ -19,7 +19,7 @@ export function Highlighting(keyWordsArray, className) {
         return result;
     };
 
-//Make range from each matched word, return array of created ranges
+    //Make range from each matched word, return array of created ranges
     function makeRangesFromMatches(arr, node) {
         var ranges = [];
 
@@ -40,7 +40,7 @@ export function Highlighting(keyWordsArray, className) {
         return ranges;
     }
 
-//Wrap every range element from ranges array with 'highlighted' span tag
+    //Wrap every range element from ranges array with 'highlighted' span tag
     function wrapNodes(ranges) {
         for (var i = 0; i < ranges.length; i++) {
             var highlightTag = document.createElement('span');
@@ -66,33 +66,42 @@ export function Highlighting(keyWordsArray, className) {
         }
     };
 
+    //Look for a word in the text
+    function isMatch(text, arr) {
+        return new RegExp(arr.map(function (w) {
+            return '^' + w + '$';
+        }).join('|'), 'gi').test(text);
+    }
+
+    //Check and handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
+    function isCaretBeforeSpan(sel) {
+        var anchorNode = sel.anchorNode,
+            nextNode = anchorNode.nextElementSibling;
+        return (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === 'SPAN'));
+
+    }
+
+    //Unwrap text in node
+    function unwrapNode(node, content) {
+        $(node).contents().unwrap();
+        content.normalize();
+    }
+
     //Check every highlighted node for changes
-    this.checkHighlighted = function (e, content) {
-            var sel = window.getSelection(),
-                anchorNode = sel.anchorNode,
-                nextNode = anchorNode.nextElementSibling,
-                nodeToCheck = sel.baseNode.parentElement;
-            //Handle caret positioning just before highlighted node, that prevent sticking of regular text nodes with highlighted
-            if (anchorNode.length === sel.anchorOffset && (nextNode && nextNode.nodeName === 'SPAN')) {
-                $(nextNode).contents().unwrap();
-                content.normalize();
-            }
-            if (nodeToCheck.className === className || sel.baseNode.className === className) {
-                var range = sel.getRangeAt(0),
-                    char = getCharacterOffsetWithin(range, content),
-                    highlighted = content.getElementsByClassName(className);
-                for (var i = 0; i < highlighted.length; i++) {
-                    var text = $(highlighted[i]).text();
-                    if (!(new RegExp(keyWordsArray.map(function (w) {
-                            return '^' + w + '$';
-                        }).join('|'), 'gi').test(text))) {
-                        $(highlighted[i]).contents().unwrap();
-                        content.normalize();
-                        if (e.keyCode !== 13) {
-                            setCaretCharIndex(content, char);
-                        }
-                    }
+    this.checkHighlighted = function (content, sel) {
+        var nodeToCheck = sel.focusNode.parentElement;
+        if (isCaretBeforeSpan(sel)) {
+            var nextNode = sel.anchorNode.nextElementSibling;
+            unwrapNode(nextNode, content);
+        }
+        if (nodeToCheck.className === className || sel.focusNode.className === className) {
+            var highlighted = content.getElementsByClassName(className);
+            for (var i = 0; i < highlighted.length; i++) {
+                var text = $(highlighted[i]).text();
+                if (!isMatch(text, keyWordsArray)) {
+                    unwrapNode(highlighted[i], content);
                 }
             }
+        }
     };
 }
