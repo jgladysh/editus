@@ -1,5 +1,6 @@
 module.exports = function(config) {
-    config.set({
+
+    var configuration = {
         browsers: ['PhantomJS', 'Chrome'],
 
         customLaunchers: {
@@ -30,5 +31,9 @@ module.exports = function(config) {
         webpackServer: {
             noInfo: true
         }
-    });
+    };
+    if (process.env.TRAVIS) {
+        configuration.browsers = ['Chrome_travis_ci'];
+    }
+    config.set(configuration);
 };
