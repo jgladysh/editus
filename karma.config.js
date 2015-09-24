@@ -1,6 +1,14 @@
 module.exports = function(config) {
     config.set({
         browsers: ['PhantomJS', 'Chrome'],
+
+        customLaunchers: {
+            Chrome_travis_ci: {
+                base: 'Chrome',
+                flags: ['--no-sandbox']
+            }
+        },
+        singleRun: false,
         files: [
             "./bower_components/jquery/dist/jquery.js",
             "./bower_components/bootstrap/dist/js/bootstrap.min.js",
