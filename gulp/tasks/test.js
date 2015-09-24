@@ -7,6 +7,6 @@ var Server = require('karma').Server;
 gulp.task('test', function (done) {
     new Server({
         configFile: __dirname + '/../../karma.config.js',
-        singleRun: true
+        singleRun: false
     }, done).start();
 });

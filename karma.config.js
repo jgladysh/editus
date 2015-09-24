@@ -1,6 +1,6 @@
 module.exports = function(config) {
     config.set({
-        browsers: ['PhantomJS'],
+        browsers: ['PhantomJS', 'Chrome'],
         files: [
             "./bower_components/jquery/dist/jquery.js",
             "./bower_components/bootstrap/dist/js/bootstrap.min.js",
