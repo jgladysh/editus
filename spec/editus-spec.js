@@ -32,14 +32,14 @@ describe("highlighting", function () {
         expect(editus.popoverId).toEqual('popover_content3');
         expect(editus.Suggestion).toBeDefined();
     });
-    afterEach(function () {
-        div.remove();
-        div = null;
-        editus = null;
-    });
     it("check that editor throw error when element that passed isn't type of DIV", function(){
         span = $("<span contenteditable='true' class = 'content' id='content4'> </span>");
         $(document.body).append(span);
         expect(function(){initEditus('content4')}).toThrow('Editable element must be DIV');
+    });
+    afterEach(function () {
+        div.remove();
+        div = null;
+        editus = null;
     });
 });

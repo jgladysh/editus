@@ -92,15 +92,14 @@ export function UndoRedo() {
 
     //Executing at changes in editor with timeout and save changes to stack
     //On key down event timeout is 250 ms for optimizing undo/redo algorithm. On mouse event timeout is 0 ms.
-    this.execute = function (timeout, e, content) {
+    this.execute = function (timeout, content) {
         //Don't set 250 ms timeout if it's first phrase in editor, or if it first change after undo event,
         //because we need to catch it exactly from beginning
         if (this.wasUndo || !content.hasChildNodes()) {
             timeout = 0;
         }
-        clearTimeout(this.timer);
 
-        this.timer = setTimeout(function () {
+        var saveChanges = function () {
             var range = window.getSelection().getRangeAt(0),
                 newValue = content.innerHTML,
                 undoPosition = ur.position,
@@ -110,8 +109,8 @@ export function UndoRedo() {
                     offset: range.startOffset,
                     parentIndex: indexes.parentIndex
                 };
-            //Handle and don't save if nothing was changed or was 'new line' event
-            if (undoPosition === redoPosition || e.keyCode === 13) {
+            //Handle and don't save if nothing was changed
+            if (undoPosition === redoPosition) {
                 ur.wasUndo = false;
                 return;
             }
@@ -126,7 +125,14 @@ export function UndoRedo() {
             ur.startValue = newValue;
             ur.position = redoPosition;
             ur.wasUndo = false;
-        }, timeout);
+        };
+
+        if (timeout < 0) {
+            saveChanges();
+        } else {
+            clearTimeout(this.timer);
+            this.timer = setTimeout(saveChanges, timeout);
+        }
     };
 
     //Catch mouse clicking and arrow keys events for doesn't saving all series of clicks, that doesn't change content.

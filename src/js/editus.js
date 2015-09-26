@@ -53,7 +53,7 @@ function Editus(id) {
         };
     }
 
-//Executing on key down event
+    //Executing on key down event
     function processKeyDown(e) {
         var d = new $.Deferred();
 
@@ -87,7 +87,7 @@ function Editus(id) {
         return d.promise();
     }
 
-//Executing on key up event
+    //Executing on key up event
     function processKeyUp(e) {
         //Return if text was selected
         if (window.getSelection().type === "Range") {
@@ -96,7 +96,7 @@ function Editus(id) {
         process(e);
     }
 
-//Check text for words to highlight and set caret to current position
+    //Check text for words to highlight and set caret to current position
     function process(e) {
         var d = new $.Deferred();
         var selection = window.getSelection(),
@@ -130,23 +130,24 @@ function Editus(id) {
         return d.promise();
     }
 
-    function executeStack(time) {
-        if (!ed.meta) {
-            ed.UndoRedo.execute(time, event, ed.content());
+    function executeStack(time, event) {
+        var newLine = event.keyCode === 13;
+        if (!ed.meta && !newLine) {
+            ed.UndoRedo.execute(time, ed.content());
         }
     }
 
-//Add events to contentEditable node
+    //Add events to contentEditable node
     function addEvents() {
         ed.content().onkeyup = function (event) {
             processKeyUp(event);
         };
         ed.content().onkeydown = function (event) {
-            processKeyDown(event).then(executeStack(250));
+            processKeyDown(event).then(executeStack(250, event));
         };
         ed.content().onmouseup = function (event) {
             ed.meta = false;
-            process(event).then(executeStack(0));
+            process(event).then(executeStack(0, event));
         };
     }
 
