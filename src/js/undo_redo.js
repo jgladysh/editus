@@ -16,7 +16,11 @@ export function UndoRedo() {
     this.canRedo = false;
     this.canUndo = false;
     this.wasUndo = false;
-    this.position = 0;
+    this.position = {
+        nodeIndex: undefined,
+        offset: 0,
+        parentIndex: undefined
+    };
     this.cursorChange = false;
 
     var ur = this;
@@ -109,17 +113,12 @@ export function UndoRedo() {
                     offset: range.startOffset,
                     parentIndex: indexes.parentIndex
                 };
-            //Handle and don't save if nothing was changed
-            if (undoPosition === redoPosition) {
-                ur.wasUndo = false;
-                return;
-            }
             //Save new caret position if start typing after undo event
             if (ur.wasUndo) {
                 undoPosition = ur.stack.stackPosition >= 0 ? ur.stack.commands[ur.stack.stackPosition].redoPosition : ur.stack.commands[0].redoPosition;
             }
 
-            if (!catchEffectlessClick(undoPosition, redoPosition, newValue)) {
+            if (!catchEffectlessClick(redoPosition, newValue)) {
                 ur.stack.execute(new ur.EditCommand(content, ur.startValue, newValue, undoPosition, redoPosition));
             }
             ur.startValue = newValue;
@@ -137,14 +136,14 @@ export function UndoRedo() {
 
     //Catch mouse clicking and arrow keys events for doesn't saving all series of clicks, that doesn't change content.
     // Return true if was more than one click in course
-    function catchEffectlessClick(undoPosition, redoPosition, newValue) {
+    function catchEffectlessClick(redoPosition, newValue) {
         var changed = false;
-        if (undoPosition !== redoPosition && newValue === ur.startValue) {
+        if (newValue === ur.startValue) {
             //Save only last one from series
             if (ur.cursorChange) {
                 ur.stack.commands[ur.stack.commands.length - 1].redoPosition = redoPosition;
-                changed = true;
             }
+            changed = true;
             ur.cursorChange = true;
         }
         else {

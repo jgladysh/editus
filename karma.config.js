@@ -1,7 +1,7 @@
 module.exports = function(config) {
 
     var configuration = {
-        browsers: ['PhantomJS', 'Chrome'],
+        browsers: ['Chrome'],
 
         customLaunchers: {
             Chrome_travis_ci: {

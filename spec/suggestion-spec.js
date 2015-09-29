@@ -5,9 +5,10 @@ describe("undo_redo", function () {
         div3;
 
     beforeEach(function () {
-        div3 = $("<div contenteditable='true' class = 'content' id='content6'> </div>");
+        var id = Math.random();
+        div3 = $("<div contenteditable='true' class = 'content' id='"+ id + "'></div>");
         $(document.body).append(div3);
-        editus3 = initEditus('content6');
+        editus3 = initEditus(id);
     });
 
     it("expect that popover container was added after initialisation", function () {

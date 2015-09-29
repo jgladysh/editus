@@ -10,14 +10,11 @@ describe("highlighting", function () {
         selection;
 
     beforeEach(function () {
-        div = $("<div contenteditable='true' class = 'content' id='content3'>to t</div>");
-        div1 = $("<div contenteditable='true' class='content' id='content1'><span class='highlighted'>tot</span>&nbsp;the&nbsp;</div>");
+        var id = Math.random();
+        div = $("<div contenteditable='true' class = 'content' id='"+ id + "'>to t</div>");
         $(document.body).append(div);
-        $(document.body).append(div1);
-        editus = initEditus('content3');
-        editus1 = initEditus('content1');
+        editus = initEditus(id);
         editus.setHighlightingWords(['to', 'all', 'users'], 'highlighted');
-        editus1.setHighlightingWords(['to', 'all', 'users'], 'highlighted');
         highlighting = editus.Highlighting;
     });
     it("returns the position of word in text", function () {
@@ -29,6 +26,10 @@ describe("highlighting", function () {
         expect(editus.content().childNodes[1].nodeName).toEqual('SPAN');
     });
     it("check that node was unwrapped", function () {
+        div1 = $("<div contenteditable='true' class='content' id='content1'><span class='highlighted'>tot</span>&nbsp;the&nbsp;</div>");
+        $(document.body).append(div1);
+        editus1 = initEditus('content1');
+        editus1.setHighlightingWords(['to', 'all', 'users'], 'highlighted');
         editus1.content().focus();
         setCaretCharIndex(editus1, 0);
         selection = window.getSelection();
@@ -39,9 +40,6 @@ describe("highlighting", function () {
     afterEach(function () {
         div.remove();
         div = null;
-        div1.remove();
-        div1 = null;
         editus = null;
-        editus1 = null;
     });
 });
