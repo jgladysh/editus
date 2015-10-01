@@ -17,9 +17,9 @@ export function UndoRedo() {
     this.canUndo = false;
     this.wasUndo = false;
     this.position = {
-        nodeIndex: undefined,
+        nodeIndex: 0,
         offset: 0,
-        parentIndex: undefined
+        parentIndex: 0
     };
     this.cursorChange = false;
 
@@ -138,12 +138,16 @@ export function UndoRedo() {
     // Return true if was more than one click in course
     function catchEffectlessClick(redoPosition, newValue) {
         var changed = false;
+        var previousPosition = ur.stack.commands[ur.stack.commands.length - 1];
         if (newValue === ur.startValue) {
+            if (previousPosition && JSON.stringify(previousPosition.redoPosition) === JSON.stringify(redoPosition)) {
+                changed = true
+            }
             //Save only last one from series
             if (ur.cursorChange) {
                 ur.stack.commands[ur.stack.commands.length - 1].redoPosition = redoPosition;
+                changed = true;
             }
-            changed = true;
             ur.cursorChange = true;
         }
         else {
@@ -157,7 +161,7 @@ export function UndoRedo() {
         if (node.id === content.id) {
             return 0;
         }
-        while (node.nodeName !== 'DIV' && node.parentNode.nodeName !== 'DIV') {
+        while (node & node.nodeName !== 'DIV' && node.parentNode.nodeName !== 'DIV') {
             node = node.parentNode;
         }
         return {
@@ -165,6 +169,7 @@ export function UndoRedo() {
             parentIndex: findParentIndex(node, content)
         };
     }
+
     //Return index of line node in content.
     function findParentIndex(node, content) {
         var lineIndex = 0,

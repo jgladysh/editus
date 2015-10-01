@@ -18,6 +18,32 @@ describe("undo_redo", function () {
         expect(editus2.UndoRedo.stack).toBeDefined();
     });
 
+    it("expect that saved just last caret position in case of multiply clicking", function () {
+        editus2.content().innerHTML ='to to to to to';
+        editus2.content().focus();
+        editus2.UndoRedo.execute(-1, editus2.content());
+
+        setCaretCharIndex(editus2.content(), 1);
+        editus2.content().focus();
+        editus2.UndoRedo.execute(-1, editus2.content());
+
+        setCaretCharIndex(editus2.content(), 2);
+        editus2.content().focus();
+        editus2.UndoRedo.execute(-1, editus2.content());
+
+        setCaretCharIndex(editus2.content(), 3);
+        editus2.content().focus();
+        editus2.UndoRedo.execute(-1, editus2.content());
+
+        editus2.UndoRedo.stack.undo();
+        var range = window.getSelection().getRangeAt(0);
+        expect(getCharacterOffsetWithin(range,editus2.content())).toEqual(0);
+
+        editus2.UndoRedo.stack.redo();
+        var range = window.getSelection().getRangeAt(0);
+        expect(getCharacterOffsetWithin(range,editus2.content())).toEqual(3);
+    });
+
     it("expect that nothing was saved to stack if nothing was changed", function () {
         expect(editus2.content().innerHTML).toEqual('');
         editus2.content().focus();
