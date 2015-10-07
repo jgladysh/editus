@@ -1,5 +1,6 @@
 var gulp = require('gulp');
 var Server = require('karma').Server;
+var isTravis = process.env.TRAVIS || false;
 
 /**
  * Run test once and exit
@@ -7,6 +8,6 @@ var Server = require('karma').Server;
 gulp.task('test', function (done) {
     new Server({
         configFile: __dirname + '/../../karma.config.js',
-        singleRun: false
+        singleRun: isTravis
     }, done).start();
 });

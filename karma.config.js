@@ -9,7 +9,6 @@ module.exports = function(config) {
                 flags: ['--no-sandbox']
             }
         },
-        singleRun: true,
         files: [
             "./bower_components/jquery/dist/jquery.js",
             "./bower_components/bootstrap/dist/js/bootstrap.min.js",
