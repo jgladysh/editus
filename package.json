@@ -72,6 +72,7 @@
     "node-notifier": "^4.1.2",
     "reactify": "^1.0.0",
     "require-dir": "^0.1.0",
+    "restify": "latest",
     "vinyl-buffer": "^1.0.0",
     "vinyl-source-stream": "^1.0.0",
     "webpack": "^1.8.4"
