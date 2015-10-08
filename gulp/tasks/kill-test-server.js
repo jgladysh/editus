@@ -3,7 +3,8 @@ var shell = require('gulp-shell');
 
 var server = require('../../spec/test-server/server.js');
 
-gulp.task('test-server', function () {
-    return server.StartServer();
+gulp.task('kill-test-server', ['test'], function (cb) {
+    server.StopServer();
+    cb();
 });
 

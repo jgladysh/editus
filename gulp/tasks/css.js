@@ -1,20 +1,20 @@
-var gulp     = require('gulp'),
-    prefix   = require('gulp-autoprefixer'),
+var gulp = require('gulp'),
+    prefix = require('gulp-autoprefixer'),
     compress = require('gulp-minify-css'),
-    gulpif   = require('gulp-if'),
-    rename   = require('gulp-rename'),
+    gulpif = require('gulp-if'),
+    rename = require('gulp-rename'),
     notifier = require('../helpers/notifier'),
-    config   = require('../config').css;
+    config = require('../config').css;
 
 /* Логика css-таска повторяет логику js-таска */
 
-gulp.task('css', function(cb) {
+gulp.task('css', function (cb) {
 
     var queue = config.bundles.length;
 
-    var buildThis = function(bundle) {
+    var buildThis = function (bundle) {
 
-        var build = function() {
+        var build = function () {
             return (
                 gulp.src(bundle.src)
                     .pipe(prefix(config.autoprefixer))
@@ -25,7 +25,7 @@ gulp.task('css', function(cb) {
             );
         };
 
-        var handleQueue = function() {
+        var handleQueue = function () {
             notifier(bundle.destFile);
             if (queue) {
                 queue--;

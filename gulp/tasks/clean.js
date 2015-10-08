@@ -1,14 +1,14 @@
 "use strict";
 
-var gulp   = require('gulp'),
-    del    = require('del'),
+var gulp = require('gulp'),
+    del = require('del'),
     config = require('../config').clean;
 
 
-gulp.task('clean', function(cb) {
+gulp.task('clean', function (cb) {
 
-    del([].concat(
-            config._dist    + '**/*'
+    return del([].concat(
+            config._dist + '**/*'
         ),
         cb
     );

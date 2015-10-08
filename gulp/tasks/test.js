@@ -5,9 +5,14 @@ var isTravis = process.env.TRAVIS || false;
 /**
  * Run test once and exit
  */
-gulp.task('test', function (done) {
-    new Server({
+gulp.task('test', function (cb) {
+    var server = new Server({
         configFile: __dirname + '/../../karma.config.js',
-        singleRun: isTravis
-    }, done).start();
+        singleRun: true
+    });
+    server.start();
+    server.on("browser_complete", function () {
+        console.log('testing completed');
+        cb();
+    });
 });
