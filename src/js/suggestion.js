@@ -3,7 +3,6 @@
  */
 "use strict";
 
-//import {execute} from './undo_redo';
 import {setCaretCharIndex,getCharacterOffsetWithin} from './caret';
 import 'jquery';
 import jQuery from 'jquery';
@@ -59,7 +58,6 @@ export function Suggestion(url, popoverId, popoverContainerId, content) {
         xhr.onload = function () {
 
             var text = xhr.responseText;
-            console.log('Response from CORS request to ' + url + ': ' + text);
 
             showPopover(cont, text);
         };

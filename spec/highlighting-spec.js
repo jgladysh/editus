@@ -36,6 +36,8 @@ describe("highlighting", function () {
         expect(editus1.content().childNodes[0].nodeName).toEqual('SPAN');
         highlighting.checkHighlighted(editus1.content(), selection);
         expect(editus1.content().childNodes[0].nodeName).not.toEqual('SPAN');
+        div1.remove();
+        div1 = null;
     });
     afterEach(function () {
         div.remove();

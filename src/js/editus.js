@@ -47,9 +47,10 @@ function Editus(id) {
     };
 
     function addPopoverEvent() {
-        document.getElementById(ed.popoverContainerId).onmouseup = function (event) {
-            ed.Highlighting.checkHighlighted(ed.content());
-            ed.UndoRedo.execute(0, event, ed.content());
+        document.getElementById(ed.popoverContainerId).onmouseup = function () {
+            var selection = window.getSelection();
+            ed.Highlighting.checkHighlighted(ed.content(), selection);
+            ed.UndoRedo.execute(0, ed.content());
         };
     }
 
