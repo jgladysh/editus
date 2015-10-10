@@ -27,7 +27,7 @@ describe("highlighting", function () {
     });
     it("check that highlighted object was created and highlights were set", function () {
         editus.setHighlightingWords(['a', 'aaa', 'aa'], 'highlighted');
-        expect(editus.Highlighting).toBeDefined();
+        expect(editus.highlights.length).not.toEqual(0);
     });
     it("check that editors suggestion function throws error without required arguments", function () {
         expect(function () {

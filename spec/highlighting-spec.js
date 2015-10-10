@@ -15,7 +15,7 @@ describe("highlighting", function () {
         $(document.body).append(div);
         editus = initEditus(id);
         editus.setHighlightingWords(['to', 'all', 'users'], 'highlighted');
-        highlighting = editus.Highlighting;
+        highlighting = editus.highlights[0];
     });
     it("returns the position of word in text", function () {
         var matches = highlighting.getMatches('to', 'ti to');

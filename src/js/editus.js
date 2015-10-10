@@ -9,6 +9,7 @@ import {UndoRedo} from './undo_redo';
 
 function Editus(id) {
     this.UndoRedo = new UndoRedo();
+    this.highlights = [];
     this.meta = false;
     this.content = function () {
         return document.getElementById(id);
@@ -21,12 +22,12 @@ function Editus(id) {
     // Add words to be highlighted
     Editus.prototype.setHighlightingWords = function (arr, className) {
         if (!arr || arr.constructor !== Array) {
-            throw 'Array of highlighted words should be provided'
+            throw 'Array of highlighted words should be provided';
         }
         if (!className || className.constructor !== String) {
-            throw 'Class name for highlighted words in String format should be provided'
+            throw 'Class name for highlighted words in String format should be provided';
         }
-        this.Highlighting = new Highlighting(arr, className);
+        ed.highlights.push(new Highlighting(arr, className));
         if (this.Suggestion) {
             addPopoverEvent();
         }
@@ -35,13 +36,13 @@ function Editus(id) {
     //Setting of service url presume actual suggestions from server side
     Editus.prototype.setSuggestionsService = function (url) {
         if (!url) {
-            throw 'url to backend suggestion service should be provided'
+            throw 'url to backend suggestion service should be provided';
         }
         ed.popoverContainerId = 'popoverContainer' + '_' + id;
         ed.popoverId = 'popover' + '_' + id;
 
         this.Suggestion = new Suggestion(url, ed.popoverId, ed.popoverContainerId, ed.content());
-        if (this.Highlighting) {
+        if (ed.highlights.length > 0) {
             addPopoverEvent();
         }
     };
@@ -49,7 +50,9 @@ function Editus(id) {
     function addPopoverEvent() {
         document.getElementById(ed.popoverContainerId).onmouseup = function () {
             var selection = window.getSelection();
-            ed.Highlighting.checkHighlighted(ed.content(), selection);
+            ed.highlights.forEach(function (item) {
+                item.checkHighlighted(ed.content(), selection);
+            });
             ed.UndoRedo.execute(0, ed.content());
         };
     }
@@ -106,8 +109,10 @@ function Editus(id) {
             char = getCharacterOffsetWithin(range, ed.content());
 
         //Handling arrow buttons events
-        if (ed.Highlighting && e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
-            ed.Highlighting.checkHighlighted(ed.content(), selection);
+        if (ed.highlights.length > 0 && e.keyCode !== 37 && e.keyCode !== 38 && e.keyCode !== 39 && e.keyCode !== 40) {
+            ed.highlights.forEach(function (item) {
+                item.checkHighlighted(ed.content(), selection);
+            });
         }
 
         if (ed.content.firstChild !== null) {
@@ -115,10 +120,12 @@ function Editus(id) {
             if (selection.type === "Range") {
                 return d.resolve();
             }
-            if (ed.Highlighting) {
-                ed.Highlighting.checkEveryTag(ed.content(), selection);
-                selection.removeAllRanges();
-                selection.addRange(range);
+            if (ed.highlights.length > 0) {
+                ed.highlights.forEach(function (item) {
+                    item.checkEveryTag(ed.content(), selection);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                });
             }
             //Don't manually set caret in case of moving to new line
             if (ed.meta || (!ed.meta && offset === 0)) {
