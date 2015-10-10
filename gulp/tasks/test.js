@@ -8,7 +8,7 @@ var isTravis = process.env.TRAVIS || false;
 gulp.task('test', function (cb) {
     var server = new Server({
         configFile: __dirname + '/../../karma.config.js',
-        singleRun: true
+        singleRun: isTravis
     });
     server.start();
     server.on("browser_complete", function () {
