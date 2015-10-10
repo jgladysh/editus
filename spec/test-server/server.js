@@ -6,7 +6,7 @@ exports.StartServer = function () {
     var response = function respond(req, res, next) {
         res.setHeader('Access-Control-Allow-Origin', '*');
         res.setHeader('Content-Type', 'text/html');
-        res.write("1,2,3,4,5,6,7");
+        res.write("Item_1,Item_2,Item_3,Item_4,Item_5,Item_6,Item_7");
         res.end();
     };
 

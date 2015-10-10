@@ -40,7 +40,7 @@ describe("undo_redo", function () {
         });
         editus3.content().focus();
         $(el).trigger(event);
-        expect(editus3.content().innerHTML).toEqual('1');
+        expect(editus3.content().innerHTML).toEqual('Item_1');
     });
 
     afterEach(function () {

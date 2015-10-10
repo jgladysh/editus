@@ -141,7 +141,7 @@ export function UndoRedo() {
         var previousPosition = ur.stack.commands[ur.stack.commands.length - 1];
         if (newValue === ur.startValue) {
             if (previousPosition && JSON.stringify(previousPosition.redoPosition) === JSON.stringify(redoPosition)) {
-                changed = true
+                changed = true;
             }
             //Save only last one from series
             if (ur.cursorChange) {
@@ -161,7 +161,7 @@ export function UndoRedo() {
         if (node.id === content.id) {
             return 0;
         }
-        while (node & node.nodeName !== 'DIV' && node.parentNode.nodeName !== 'DIV') {
+        while (node && node.nodeName !== 'DIV' && node.parentNode.nodeName !== 'DIV') {
             node = node.parentNode;
         }
         return {
