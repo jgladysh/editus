@@ -20,14 +20,14 @@ function Editus(id) {
     var ed = this;
 
     // Add words to be highlighted
-    Editus.prototype.setHighlightingWords = function (arr, className) {
+    Editus.prototype.setHighlightingWords = function (arr, className, color, weight, style) {
         if (!arr || arr.constructor !== Array) {
             throw 'Array of highlighted words should be provided';
         }
         if (!className || className.constructor !== String) {
             throw 'Class name for highlighted words in String format should be provided';
         }
-        ed.highlights.push(new Highlighting(arr, className));
+        ed.highlights.push(new Highlighting(arr, className, color, weight, style));
         if (this.Suggestion) {
             addPopoverEvent();
         }

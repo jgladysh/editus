@@ -5,7 +5,7 @@
 
 import 'jquery';
 
-export function Highlighting(keyWordsArray, className) {
+export function Highlighting(keyWordsArray, className, color, weight, style) {
     var hl = this;
 
     //Find occurrences of word in text, and return array of indexes of each matched word inside text
@@ -45,6 +45,9 @@ export function Highlighting(keyWordsArray, className) {
         for (var i = 0; i < ranges.length; i++) {
             var highlightTag = document.createElement('span');
             highlightTag.className = className;
+            highlightTag.style.color = color ? color : '';
+            highlightTag.style.fontWeight = weight ? weight : '';
+            highlightTag.style.fontStyle = style ? style : '';
             ranges[i].surroundContents(highlightTag);
         }
     }
